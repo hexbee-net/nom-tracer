@@ -832,7 +832,7 @@ pub fn print_colored<I: AsRef<str>>(s: I) {
         use termcolor::{ColorChoice, StandardStream};
 
         let mut stdout = StandardStream::stdout(ColorChoice::Always);
-        writeln!(&mut stdout, "{}", s.as_ref()).unwrap();
+        write!(&mut stdout, "{}", s.as_ref()).unwrap();
     }
     #[cfg(not(all(feature = "trace", feature = "trace-color")))]
     {
