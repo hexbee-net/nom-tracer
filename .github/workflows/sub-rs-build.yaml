@@ -1,0 +1,38 @@
+name: ❖ Build - Sui VM
+
+on:
+  workflow_call:
+
+env:
+  RUST_BACKTRACE: full
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ vars.RUST_VERSION }}
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          toolchain: ${{ vars.RUST_VERSION }}
+          override: true
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rs-artifacts
+          path: |
+            target/release
+            !target/release/.fingerprint
+            !target/release/build
+            !target/release/deps

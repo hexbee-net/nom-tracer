@@ -1,0 +1,11 @@
+# IDE
+**/.history/
+**/.vscode/
+**/.idea/
+
+# OSX
+.DS_Store
+
+# Rust build directory
+**/target
+.pre-commit*

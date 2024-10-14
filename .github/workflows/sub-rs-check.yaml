@@ -1,0 +1,143 @@
+name: ❖ Check - Rust
+
+on:
+  workflow_call:
+    inputs:
+      clippy:
+        description: 'Run Clippy'
+        type: boolean
+        default: true
+      udeps:
+        description: 'Check unused dependencies'
+        type: boolean
+        default: true
+      formatting:
+        description: 'Check Formatting'
+        type: boolean
+        default: true
+      deny:
+        description: 'Run Deny'
+        type: boolean
+        default: true
+      tests:
+        description: 'Run Tests'
+        type: boolean
+        default: true
+
+env:
+  RUST_BACKTRACE: full
+
+permissions:
+  contents: read
+
+jobs:
+  clippy:
+    name: Rust - Clippy
+    runs-on: ubuntu-latest
+    if: ${{ inputs.clippy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ vars.RUST_VERSION }} with clippy
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          toolchain: ${{ vars.RUST_VERSION }}
+          components: clippy
+          override: true
+
+      - name: Run Clippy
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: clippy
+          args: --all-targets --all-features --tests -- -D warnings
+
+  udeps:
+    name: Rust - Unused Dependencies
+    runs-on: ubuntu-latest
+    if: ${{ inputs.udeps }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust nightly
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Run cargo-udeps
+        uses: aig787/cargo-udeps-action@v1
+        with:
+          version: 'latest'
+          args: '--all-targets'
+
+  formatting:
+    name: Rust - Check Formatting
+    runs-on: ubuntu-latest
+    if: ${{ inputs.formatting }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install nightly with rustfmt
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
+          override: true
+
+      - name: Check Formatting
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: fmt
+          args: -- --check
+
+  deny:
+    name: Rust - Deny
+    runs-on: ubuntu-latest
+    if: ${{ inputs.deny }}
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check ${{ matrix.checks }}
+          arguments: --all-features
+
+  tests:
+    name: Rust - Tests
+    runs-on: ubuntu-latest
+    if: ${{ inputs.tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ vars.RUST_VERSION }}
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          profile: minimal
+          toolchain: ${{ vars.RUST_VERSION }}
+          override: true
+
+      - name: Unit Tests (Default Features)
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: test
+          args: --lib --bins
+
+      - name: Unit Tests (All Features)
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: test
+          args: --all-features --lib --bins

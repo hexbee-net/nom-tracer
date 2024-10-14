@@ -1,0 +1,16 @@
+name: ⚙️ Validate
+run-name: "Validate: ${{ github.sha }}"
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  issues: read
+  pull-requests: write
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/sub-ci.yaml
+    secrets: inherit

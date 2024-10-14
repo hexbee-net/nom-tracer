@@ -1,0 +1,45 @@
+name: ⚡ Pull-Request
+run-name: 'PR / ${{ github.event.pull_request.title }}'
+
+on:
+  pull_request:
+    types:
+      - opened        # A pull request was created.
+      - reopened      # A closed pull request was reopened.
+      - edited        # A pull request's title, body, or labels are edited.
+      - synchronize   # A pull request's branch was synchronized with its base branch.
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  issues: read
+  pull-requests: write
+
+jobs:
+  check_pr:
+    name: Check PR
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Check PR Title
+        uses: aslafy-z/conventional-pr-title-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/sub-ci.yaml
+    secrets: inherit
+
+  merge_check:
+    name: Merge Check
+    runs-on: ubuntu-latest
+    if: ${{ always() && !cancelled() && !failure() }}
+    needs: [ check_pr, ci ]
+    steps:
+      - run: echo "CI is successful"
