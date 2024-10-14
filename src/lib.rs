@@ -824,6 +824,7 @@ pub fn get_trace_for_tag(tag: &'static str) -> String {
     }
 }
 
+#[cfg(all(feature = "trace", feature = "trace-print"))]
 pub(crate) fn print_colored<I: AsRef<str>>(s: I) {
     use std::io::Write;
 
