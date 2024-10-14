@@ -328,7 +328,7 @@ impl Display for TraceEvent {
                                 indent, self.location, self.input, result
                             )
                             .green(),
-                            context.on_bright_green()
+                            context.on_cyan()
                         )
                     } else {
                         writeln!(
@@ -352,7 +352,7 @@ impl Display for TraceEvent {
                                 indent, self.location, self.input, e
                             )
                             .red(),
-                            context.on_bright_red()
+                            context.on_cyan()
                         )
                     } else {
                         writeln!(
@@ -376,7 +376,7 @@ impl Display for TraceEvent {
                                 indent, self.location, self.input, e
                             )
                             .magenta(),
-                            context.on_bright_magenta()
+                            context.on_cyan()
                         )
                     } else {
                         writeln!(
@@ -400,7 +400,7 @@ impl Display for TraceEvent {
                                 indent, self.location, self.input, i
                             )
                             .yellow(),
-                            context.on_bright_yellow()
+                            context.on_cyan()
                         )
                     } else {
                         writeln!(
@@ -824,7 +824,7 @@ pub fn get_trace_for_tag(tag: &'static str) -> String {
     }
 }
 
-pub fn print_colored<I: AsRef<str>>(s: I) {
+pub(crate) fn print_colored<I: AsRef<str>>(s: I) {
     use std::io::Write;
 
     #[cfg(all(feature = "trace", feature = "trace-color"))]
