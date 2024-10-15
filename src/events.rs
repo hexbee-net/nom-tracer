@@ -2,13 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(feature = "trace-color")]
-use {
-    colored::Colorize,
-};
-
-use {
-    std::fmt::{Display, Formatter},
-};
+use colored::Colorize;
+use std::fmt::{Display, Formatter};
 
 /// Represents the type of a trace event.
 ///

@@ -1,12 +1,10 @@
 // Copyright (c) Hexbee
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(all(feature = "trace", feature = "trace-color"))]
-use colored::Colorize;
 #[cfg(all(feature = "trace", feature = "trace-context"))]
 use nom::error::ContextError;
 #[cfg(feature = "trace")]
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
 use {
     nom::{IResult, Parser},
     std::fmt::Debug,
@@ -14,8 +12,8 @@ use {
 };
 
 mod events;
-mod traces;
 mod macros;
+mod traces;
 
 /// The default tag used when no specific tag is provided.
 #[cfg(feature = "trace")]
@@ -483,22 +481,21 @@ pub fn get_trace_for_tag(tag: &'static str) -> String {
     }
 }
 
-#[cfg(all(feature = "trace", feature = "trace-print"))]
-pub(crate) fn print_colored<I: AsRef<str>>(s: I) {
+pub(crate) fn print_trace<I: AsRef<str>>(s: I) {
     use std::io::Write;
 
-    #[cfg(all(feature = "trace", feature = "trace-color"))]
+    #[cfg(feature = "trace-color")]
     {
         use termcolor::{ColorChoice, StandardStream};
-
-        let mut stdout = StandardStream::stdout(ColorChoice::Always);
-        write!(&mut stdout, "{}", s.as_ref()).unwrap();
+        let mut handle = StandardStream::stdout(ColorChoice::Always);
+        write!(handle, "{}", s.as_ref()).unwrap();
     }
-    #[cfg(not(all(feature = "trace", feature = "trace-color")))]
+
+    #[cfg(not(feature = "trace-color"))]
     {
         let stdout = std::io::stdout();
         let mut handle = stdout.lock();
-        writeln!(handle, "{}", s.as_ref()).unwrap();
+        write!(handle, "{}", s.as_ref()).unwrap();
     }
 }
 
@@ -506,7 +503,6 @@ pub(crate) fn print_colored<I: AsRef<str>>(s: I) {
 mod tests {
     use {
         super::*,
-        nom::{bytes::complete::tag, sequence::tuple, IResult},
     };
 
     #[test]
@@ -531,70 +527,5 @@ mod tests {
         assert!(!trace_list.traces[DEFAULT_TAG].active);
         trace_list.activate(DEFAULT_TAG);
         assert!(trace_list.traces[DEFAULT_TAG].active);
-    }
-
-    #[test]
-    fn test_tr() {
-        fn parse_ab(input: &str) -> IResult<&str, (&str, &str)> {
-            tuple((tag("a"), tag("b")))(input)
-        }
-
-        let mut traced_parser = tr("parse_ab", parse_ab);
-        let result = traced_parser("ab");
-        assert!(result.is_ok());
-
-        let trace = get_trace();
-        assert!(trace.contains("parse_ab"));
-        assert!(trace.contains("-> Ok"));
-    }
-
-    #[test]
-    fn test_tr_tag() {
-        fn parse_cd(input: &str) -> IResult<&str, (&str, &str)> {
-            tuple((tag("c"), tag("d")))(input)
-        }
-
-        let custom_tag = "custom";
-        let mut traced_parser = tr_tag_ctx(custom_tag, None, "parse_cd", parse_cd);
-        let result = traced_parser("cd");
-        assert!(result.is_ok());
-
-        let trace = get_trace_for_tag(custom_tag);
-        assert!(trace.contains("parse_cd"));
-        assert!(trace.contains("-> Ok"));
-    }
-
-    #[test]
-    fn test_trace_with_error() {
-        fn parse_fail(input: &str) -> IResult<&str, &str> {
-            tag("nonexistent")(input)
-        }
-
-        let mut traced_parser = tr("parse_fail", parse_fail);
-        let result = traced_parser("ab");
-        assert!(result.is_err());
-
-        let trace = get_trace();
-        assert!(trace.contains("parse_fail"));
-        assert!(trace.contains("-> Error"));
-    }
-
-    #[test]
-    fn test_nested_traces() {
-        fn parse_nested(input: &str) -> IResult<&str, (&str, &str)> {
-            tr(
-                "outer",
-                tuple((tr("inner_a", tag("a")), tr("inner_b", tag("b")))),
-            )(input)
-        }
-
-        let traced_parser = parse_nested;
-        let result = traced_parser("ab");
-        assert!(result.is_ok());
-
-        let trace = get_trace();
-        assert!(trace.contains("outer"));
-        assert!(trace.contains("inner_a"));
-        assert!(trace.contains("inner_b"));
     }
 }

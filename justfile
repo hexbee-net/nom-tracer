@@ -10,6 +10,9 @@ default:
 @build:
   cargo build --release
 
+@bacon:
+  bacon --all-features
+
 # clean up everything
 @clean:
   cargo clean
