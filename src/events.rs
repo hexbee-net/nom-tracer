@@ -44,6 +44,7 @@ pub struct TraceEvent {
 impl Display for TraceEvent {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let location = self.location;
+        #[allow(unused_mut)]
         let mut input = self.input.clone();
         let indent = "| ".repeat(self.level);
 
@@ -58,6 +59,7 @@ impl Display for TraceEvent {
             "".to_string()
         };
 
+        #[allow(unused_mut)]
         let mut ctx = if let Some(context) = self.context {
             format!("[{}]", context)
         } else {
@@ -69,6 +71,7 @@ impl Display for TraceEvent {
             ctx = ctx.on_cyan().to_string();
         }
 
+        #[allow(unused_mut)]
         let mut content = match &self.event {
             TraceEventType::Open => {
                 format!("{}(\"{}\")", self.location, input,)
