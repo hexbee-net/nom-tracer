@@ -101,22 +101,22 @@ macro_rules! __fn_name {
 /// - This macro internally uses `tr_tag_ctx` for all tracing operations.
 #[macro_export]
 macro_rules! trace {
-    ($parser:expr) => {{
+    ($parser:expr $(,)?) => {{
         let caller = $crate::__fn_name!();
         $crate::tr_tag_ctx($crate::DEFAULT_TAG, None, caller, $parser)
     }};
 
-    ($tag:ident, $parser:expr) => {{
+    ($tag:ident, $parser:expr $(,)?) => {{
         let caller = $crate::__fn_name!();
         $crate::tr_tag_ctx(stringify!($tag), None, caller, $parser)
     }};
 
-    ($context:expr, $parser:expr) => {{
+    ($context:expr, $parser:expr $(,)?) => {{
         let caller = $crate::__fn_name!();
         $crate::tr_tag_ctx($crate::DEFAULT_TAG, Some($context), caller, $parser)
     }};
 
-    ($tag:ident, $context:expr, $parser:expr) => {{
+    ($tag:ident, $context:expr, $parser:expr $(,)?) => {{
         let caller = $crate::__fn_name!();
         $crate::tr_tag_ctx(stringify!($tag), Some($context), caller, $parser)
     }};

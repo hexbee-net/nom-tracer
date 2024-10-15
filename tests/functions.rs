@@ -1,5 +1,4 @@
 use {
-    crate::debug_print,
     nom::{bytes::complete::tag, sequence::tuple, IResult},
     nom_tracer::{
         get_trace,
@@ -12,6 +11,15 @@ use {
         DEFAULT_TAG,
     },
 };
+
+fn debug_print<I: AsRef<str>>(s: I) {
+    use {
+        std::io::Write,
+        termcolor::{ColorChoice, StandardStream},
+    };
+    let mut handle = StandardStream::stdout(ColorChoice::Always);
+    write!(handle, "{}", s.as_ref()).unwrap();
+}
 
 fn parse_ab(input: &str) -> IResult<&str, (&str, &str)> {
     tuple((tag("a"), tag("b")))(input)
