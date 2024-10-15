@@ -28,7 +28,7 @@ Add `nom-tracer` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nom-tracer = "0.1.0"
+nom-tracer = "0.1"
 ```
 
 Then, wrap your parsers with the `tr` function:
