@@ -1,16 +1,18 @@
 // Copyright (c) Hexbee
 // SPDX-License-Identifier: Apache-2.0
 
+/// Internal macro to get the current function name.
+///
+/// This macro is used internally by other macros to automatically capture
+/// the name of the function where it is called.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __fn_name {
     () => {{
-        fn type_name_of_val<T: ?Sized>(_: &T) -> &'static str {
-            core::any::type_name::<T>()
-        }
+        struct Here;
         const PREFIX: &str = concat!(module_path!(), "::");
-        const SUFFIX: &str = "::{{closure}}";
-        let here = &type_name_of_val(&|| {});
+        const SUFFIX: &str = "::Here";
+        let here = core::any::type_name::<Here>();
         &here[PREFIX.len()..(here.len() - SUFFIX.len())]
     }};
 }
