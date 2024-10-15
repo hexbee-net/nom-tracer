@@ -15,6 +15,8 @@
 - 📊 Hierarchical view of parser execution
 - 🔧 Configurable via Cargo features
 
+![image](https://github.com/user-attachments/assets/b420d0fb-ae84-4351-ba93-4d21f046f55a)
+
 ## Performance
 
 One of the key advantages of `nom-tracer` is its minimal performance impact:
