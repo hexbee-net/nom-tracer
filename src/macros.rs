@@ -239,6 +239,93 @@ macro_rules! reset_trace (
     };
 );
 
+/// Sets the maximum nesting level for tracing before panic.
+///
+/// This macro sets a limit on the nesting level of traces. If the nesting level
+/// exceeds this limit, the program will panic. This can be useful for detecting
+/// infinite recursion or excessively deep parser nesting.
+///
+/// # Arguments
+///
+/// * `$level`: An expression that evaluates to `Option<usize>`. Use `Some(n)` to set a limit,
+///   or `None` to remove the limit.
+///
+/// # Examples
+///
+/// Set a maximum level for the default tag:
+///
+/// ```
+/// use nom_tracer::max_level;
+///
+/// max_level!(Some(10));
+/// // Tracing will panic if nesting exceeds 10 levels for the default tag
+/// ```
+///
+/// Set a maximum level for a custom tag:
+///
+/// ```
+/// use nom_tracer::max_level;
+///
+/// max_level!(my_custom_tag, Some(5));
+/// // Tracing will panic if nesting exceeds 5 levels for "my_custom_tag"
+/// ```
+///
+/// Remove the level limit:
+///
+/// ```
+/// use nom_tracer::max_level;
+///
+/// max_level!(None);
+/// // Removes the nesting level limit for the default tag
+/// ```
+#[macro_export]
+macro_rules! max_level (
+    ($level:expr) => {
+        $crate::NOM_TRACE.with(|trace| {
+            trace.borrow_mut().panic_on_level($crate::DEFAULT_TAG, $level);
+        });
+    };
+    ($tag:ident, $level:expr) => {
+        $crate::NOM_TRACE.with(|trace| {
+            trace.borrow_mut().panic_on_level(stringify!($tag, $level));
+        });
+    };
+);
+
+/// Retrieves the trace for either the default tag or a specified tag.
+///
+/// This macro provides a convenient way to get the trace as a string for either
+/// the default tag or a custom tag.
+///
+/// # Examples
+///
+/// Get trace for the default tag:
+///
+/// ```
+/// use nom_tracer::get_trace;
+///
+/// let default_trace = get_trace!();
+/// println!("Default trace:\n{}", default_trace);
+/// ```
+///
+/// Get trace for a custom tag:
+///
+/// ```
+/// use nom_tracer::get_trace;
+///
+/// let custom_trace = get_trace!(my_custom_tag);
+/// println!("Custom trace:\n{}", custom_trace);
+/// ```
+#[macro_export]
+macro_rules! get_trace {
+    () => {
+        $crate::get_trace_for_tag($crate::DEFAULT_TAG);
+    };
+    ($tag:ident) => {
+        $crate::get_trace_for_tag(stringify!($tag));
+    };
+}
+
 /// Prints the trace for either the default tag or a specified tag.
 ///
 /// # Examples
@@ -256,7 +343,7 @@ macro_rules! reset_trace (
 #[macro_export]
 macro_rules! print_trace {
     () => {
-        $crate::print_trace();
+        $crate::print_trace_for_tag($crate::DEFAULT_TAG);
     };
     ($tag:ident) => {
         $crate::print_trace_for_tag(stringify!($tag));

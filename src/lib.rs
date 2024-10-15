@@ -3,17 +3,16 @@
 
 #[cfg(all(feature = "trace", feature = "trace-context"))]
 use nom::error::ContextError;
-#[cfg(feature = "trace")]
-use std::collections::HashMap;
 use {
+    list::TraceList,
     nom::{IResult, Parser},
     std::fmt::Debug,
-    traces::Trace,
 };
 
-mod events;
-mod macros;
-mod traces;
+pub mod events;
+pub mod list;
+pub mod macros;
+pub mod traces;
 
 /// The default tag used when no specific tag is provided.
 #[cfg(feature = "trace")]
@@ -34,125 +33,6 @@ thread_local! {
     /// which provide a more convenient interface for adding trace events.
     #[cfg(feature = "trace")]
     pub static NOM_TRACE: std::cell::RefCell<TraceList> = ::std::cell::RefCell::new(TraceList::new());
-}
-
-/// A collection of traces, each associated with a tag.
-///
-/// The tag system allows for multiple independent traces to be maintained simultaneously.
-/// Each tag corresponds to a separate `Trace` instance, allowing for organization and
-/// separation of trace events based on different criteria (e.g., parser type, subsystem, etc.).
-#[cfg(feature = "trace")]
-#[derive(Default)]
-pub struct TraceList {
-    pub traces: HashMap<&'static str, Trace>,
-}
-
-#[cfg(feature = "trace")]
-impl TraceList {
-    /// Creates a new [TraceList] with a default trace.
-    ///
-    /// The default trace is associated with the `DEFAULT_TAG`.
-    pub fn new() -> Self {
-        let mut traces = HashMap::new();
-        traces.insert(
-            DEFAULT_TAG,
-            Trace {
-                events: Vec::new(),
-                level: 0,
-                active: true,
-            },
-        );
-
-        TraceList { traces }
-    }
-
-    /// Resets the trace for the given tag.
-    ///
-    /// This clears all events and resets the nesting level for the specified trace.
-    /// If the trace doesn't exist, a new one is created and inserted.
-    pub fn reset(&mut self, tag: &'static str) {
-        let t = self.traces.entry(tag).or_insert(Trace {
-            events: Vec::new(),
-            level: 0,
-            active: true,
-        });
-        t.reset();
-    }
-
-    /// Returns the trace for the given tag as a string, if it exists.
-    pub fn get_trace(&self, tag: &'static str) -> Option<String> {
-        self.traces.get(tag).map(|t| t.to_string())
-    }
-
-    /// Activates the trace for the given tag.
-    ///
-    /// Activated traces will record events.
-    /// If the trace doesn't exist, a new one is created and activated.
-    pub fn activate(&mut self, tag: &'static str) {
-        let t = self.traces.entry(tag).or_insert(Trace {
-            events: Vec::new(),
-            level: 0,
-            active: true,
-        });
-        t.active = true;
-    }
-
-    /// Deactivates the trace for the given tag.
-    ///
-    /// Deactivated traces will not record events, but will retain previously recorded events.
-    /// If the trace doesn't exist, a new one is created (but left inactive).
-    pub fn deactivate(&mut self, tag: &'static str) {
-        let t = self.traces.entry(tag).or_insert(Trace {
-            events: Vec::new(),
-            level: 0,
-            active: true,
-        });
-        t.active = false;
-    }
-
-    /// Opens a new trace event for the given tag.
-    ///
-    /// This increases the nesting level for the trace and records an 'open' event.
-    /// The hierarchical structure of parsing is represented by these nested open/close events.
-    pub fn open<I>(
-        &mut self,
-        tag: &'static str,
-        context: Option<&'static str>,
-        input: I,
-        location: &'static str,
-    ) where
-        I: AsRef<str>,
-    {
-        let t = self.traces.entry(tag).or_insert(Trace {
-            events: Vec::new(),
-            level: 0,
-            active: true,
-        });
-        t.open(context, input, location);
-    }
-
-    /// Closes the current trace event for the given tag.
-    ///
-    /// This decreases the nesting level for the trace and records a 'close' event,
-    /// including the result of the parsing operation (success, error, etc.).
-    /// The hierarchical structure is maintained by matching each 'close' with a previous 'open'.
-    pub fn close<I, O: Debug, E: Debug>(
-        &mut self,
-        tag: &'static str,
-        context: Option<&'static str>,
-        input: I,
-        location: &'static str,
-        result: &IResult<I, O, E>,
-    ) where
-        I: AsRef<str>,
-    {
-        let t = self.traces.entry(tag).or_insert(Trace {
-            events: Vec::new(),
-            level: 0,
-            active: true,
-        });
-        t.close(context, input, location, result);
-    }
 }
 
 #[cfg(feature = "trace-context")]

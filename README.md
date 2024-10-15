@@ -260,6 +260,65 @@ let _ = trace!(my_tag, tag("hello"))("hello world");
 print_trace!(my_tag); // Prints trace for "my_tag"
 ```
 
+### `max_level!`
+
+The `max_level!` macro allows you to set a maximum nesting level for tracing, which can be useful for detecting infinite recursion or excessively deep parser nesting.
+
+Usage:
+
+```rust
+use nom_tracer::max_level;
+
+// Set maximum nesting level to 10 for the default tag
+max_level!(Some(10));
+
+// Set maximum nesting level to 5 for a custom tag
+max_level!(my_custom_tag, Some(5));
+
+// Remove the nesting level limit for the default tag
+max_level!(None);
+
+// Remove the nesting level limit for a custom tag
+max_level!(my_custom_tag, None);
+```
+
+When the nesting level exceeds the specified maximum, the next `open` operation will cause a panic with a message indicating the maximum level was reached.
+
+#### Example
+
+```rust
+use nom_tracer::{trace, max_level};
+use nom::sequence::tuple;
+use nom::character::complete::{alpha1, char};
+use nom::IResult;
+
+fn recursive_parser(input: &str) -> IResult<&str, &str> {
+    trace!(
+        tuple((
+            alpha1,
+            char(','),
+            |i| recursive_parser(i)  // This could lead to infinite recursion
+        ))
+    )(input)
+}
+
+fn main() {
+    // Set a maximum nesting level of 5
+    max_level!(Some(5));
+
+    // This will panic if the nesting level exceeds 5
+    let _ = recursive_parser("a,b,c,d,e,f,g");
+}
+```
+
+#### Considerations
+
+1. **Debugging Tool**: `max_level!` is primarily a debugging tool. It's useful during development to catch potential issues with recursive parsers or unexpected deep nesting.
+
+2. **Choosing the Right Level**: The appropriate maximum level depends on your parser's structure. Set it high enough to allow for valid deep nesting, but low enough to catch potential infinite recursion.
+
+3. **Tag-Specific Limits**: You can set different limits for different tags, allowing for fine-grained control over various parts of your parser.
+
 ## Core Tracing Functions
 
 While the `trace!` macro is convenient for most use cases, `nom-tracer` also provides direct function calls for more advanced scenarios. These functions offer finer control over the tracing process and can be useful in situations where you need to dynamically determine tracing parameters or integrate with existing code structures.
@@ -606,7 +665,54 @@ The `trace-context` feature allows you to add contextual information to your par
 
 ### Real-time Tracing: `trace-print`
 
-The `trace-print` feature is particularly useful for debugging complex parsers, especially those that might cause stack overflows. When enabled, this feature prints trace events to the console in real-time, without buffering.
+The `trace-print` feature allows you to see trace events as they happen, providing immediate feedback during parser execution. This can be particularly useful for debugging complex parsers or those that might cause stack overflows. When combined with the [`max_level!`](#max_level) macro, it becomes a powerful tool for troubleshooting infinite recursion issues.
+
+#### Example Usage with `max_level!`
+
+Here's an example of how you might use the `trace-print` feature in combination with [`max_level!`](#max_level) to debug a potentially infinitely recursive parser:
+
+```rust
+use nom_tracer::{trace, max_level};
+use nom::sequence::tuple;
+use nom::character::complete::{alpha1, char};
+use nom::IResult;
+
+fn recursive_parser(input: &str) -> IResult<&str, &str> {
+    trace!(
+        "Recursive parsing",
+        tuple((
+            alpha1,
+            char(','),
+            |i| recursive_parser(i)  // Potential infinite recursion
+        ))
+    )(input)
+}
+
+fn main() {
+    // Set a maximum nesting level
+    max_level!(Some(10));
+
+    // This will print trace events in real-time and panic if nesting exceeds 10 levels
+    let input = "a,b,c,d,e,f,g,h,i,j,k";
+    let result = recursive_parser(input);
+    println!("Final result: {:?}", result);
+}
+```
+
+When you run this code with the `trace-print` feature enabled, you'll see trace events printed to the console in real-time as the parser executes. If the parser reaches the maximum nesting level set by [`max_level!`](#max_level), it will panic, but you'll have a real-time trace of the parser's execution up to that point.
+
+### Benefits for Debugging Infinite Recursion
+
+1. **Immediate Feedback**: You can see the parser's progress in real-time, helping you identify where it might be getting stuck.
+2. **Controlled Execution**: [`max_level!`](#max_level) prevents actual infinite recursion, while `trace-print` shows you how the parser behaved up to that point.
+3. **Insight into Parser Behavior**: You can observe the exact sequence of parser calls leading up to the recursion limit.
+4. **Easy Adjustment**: You can quickly adjust the [`max_level!`](#max_level) value to get more or less detail as needed for your debugging process.
+
+### Considerations
+
+1. **Output Volume**: Real-time printing can generate a lot of console output, especially for complex parsers or large inputs. Be prepared for potentially verbose output.
+
+2. **Interleaved Output**: If you're also printing other information to the console, it may become interleaved with the trace output. Consider using different output streams or formatting to distinguish between trace events and other output.
 
 ## Contributing
 

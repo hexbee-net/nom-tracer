@@ -19,6 +19,18 @@ pub struct Trace {
     pub events: Vec<TraceEvent>,
     pub level: usize,
     pub active: bool,
+    pub panic_on_level: Option<usize>,
+}
+
+impl Default for Trace {
+    fn default() -> Self {
+        Self {
+            events: Vec::new(),
+            level: 0,
+            active: true,
+            panic_on_level: None,
+        }
+    }
 }
 
 #[cfg(feature = "trace")]
@@ -40,6 +52,12 @@ impl Trace {
         location: &'static str,
     ) {
         if self.active {
+            if let Some(level) = self.panic_on_level {
+                if self.level >= level {
+                    panic!("Max level reached: {}", level);
+                }
+            }
+
             let event = TraceEvent {
                 level: self.level,
                 context,
