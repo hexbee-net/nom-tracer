@@ -1,6 +1,6 @@
 use {
     nom::{bytes::complete::tag, sequence::tuple, IResult},
-    nom_tracer::{get_trace, get_trace_for_tag, tr, tr_ctx, tr_tag, tr_tag_ctx, DEFAULT_TAG},
+    nom_tracer::{get_trace, get_trace_for_tag, tr, tr_ctx, tr_tag, tr_tag_ctx},
 };
 
 fn debug_print<I: AsRef<str>>(s: I) {

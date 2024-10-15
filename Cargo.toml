@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "nom-tracer"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Xavier Basty <xavier@hexbee.net>"]
 repository = "https://github.com/hexbee-net/nom-tracer"
 keywords = ["parser", "nom", "trace", "debug"]
@@ -29,3 +29,6 @@ trace-context = []
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.clippy]
+unwrap_or_default = "allow"
