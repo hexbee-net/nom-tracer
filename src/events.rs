@@ -43,206 +43,53 @@ pub struct TraceEvent {
 #[cfg(feature = "trace")]
 impl Display for TraceEvent {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let location = self.location;
+        let mut input = self.input.clone();
+        let indent = "| ".repeat(self.level);
+
         #[cfg(feature = "trace-color")]
         {
-            let indent = "| ".repeat(self.level).white();
-            match &self.event {
-                TraceEventType::Open => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}{}[{}](\"{}\")",
-                            indent,
-                            self.location,
-                            context.on_cyan(),
-                            self.input.on_bright_blue(),
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}{}({})",
-                            indent,
-                            self.location,
-                            self.input.on_bright_blue()
-                        )
-                    }
-                }
-                TraceEventType::CloseOk(result) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}[{}]",
-                            format!(
-                                "{}{}(\"{}\") -> Ok({})",
-                                indent, self.location, self.input, result
-                            )
-                            .green(),
-                            context.on_cyan()
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}",
-                            format!(
-                                "{}{}(\"{}\") -> Ok({})",
-                                indent, self.location, self.input, result
-                            )
-                            .green()
-                        )
-                    }
-                }
-                TraceEventType::CloseError(e) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}[{}]",
-                            format!(
-                                "{}{}(\"{}\") -> Error({})",
-                                indent, self.location, self.input, e
-                            )
-                            .red(),
-                            context.on_cyan()
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}",
-                            format!(
-                                "{}{}(\"{}\") -> Error({})",
-                                indent, self.location, self.input, e
-                            )
-                            .red()
-                        )
-                    }
-                }
-                TraceEventType::CloseFailure(e) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}[{}]",
-                            format!(
-                                "{}{}(\"{}\") -> Failure({})",
-                                indent, self.location, self.input, e
-                            )
-                            .magenta(),
-                            context.on_cyan()
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}",
-                            format!(
-                                "{}{}(\"{}\") -> Error({})",
-                                indent, self.location, self.input, e
-                            )
-                            .magenta()
-                        )
-                    }
-                }
-                TraceEventType::CloseIncomplete(i) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}[{}]",
-                            format!(
-                                "{}{}(\"{}\") -> Error({:?})",
-                                indent, self.location, self.input, i
-                            )
-                            .yellow(),
-                            context.on_cyan()
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}",
-                            format!(
-                                "{}{}(\"{}\") -> Error({:?})",
-                                indent, self.location, self.input, i
-                            )
-                            .yellow()
-                        )
-                    }
-                }
-            }
+            input = input.on_bright_blue().to_string();
         }
 
-        #[cfg(not(feature = "trace-color"))]
+        let alt = if f.alternate() {
+            format!("{}(\"{}\")", location, input)
+        } else {
+            "".to_string()
+        };
+
+        let mut ctx = if let Some(context) = self.context {
+            format!("[{}]", context)
+        } else {
+            "".to_string()
+        };
+
+        #[cfg(feature = "trace-color")]
         {
-            let indent = "| ".repeat(self.level);
-
-            match &self.event {
-                TraceEventType::Open => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}{}[{}](\"{}\")",
-                            indent, self.location, context, self.input
-                        )
-                    } else {
-                        writeln!(f, "{}{}(\"{}\")", indent, self.location, self.input)
-                    }
-                }
-                TraceEventType::CloseOk(result) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Ok({})[{}]",
-                            indent, self.location, self.input, result, context
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Ok({})",
-                            indent, self.location, self.input, result
-                        )
-                    }
-                }
-                TraceEventType::CloseError(e) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Error({})[{}]",
-                            indent, self.location, self.input, e, context
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Error({})",
-                            indent, self.location, self.input, e
-                        )
-                    }
-                }
-                TraceEventType::CloseFailure(e) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Failure({})[{}]",
-                            indent, self.location, self.input, e, context
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Failure({})",
-                            indent, self.location, self.input, e
-                        )
-                    }
-                }
-                TraceEventType::CloseIncomplete(i) => {
-                    if let Some(context) = self.context {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Incomplete({:?})[{}]",
-                            indent, self.location, self.input, i, context
-                        )
-                    } else {
-                        writeln!(
-                            f,
-                            "{}{}(\"{}\") -> Incomplete({:?})",
-                            indent, self.location, self.input, i
-                        )
-                    }
-                }
-            }
+            ctx = ctx.on_cyan().to_string();
         }
+
+        let mut content = match &self.event {
+            TraceEventType::Open => {
+                format!("{}(\"{}\")", self.location, input,)
+            }
+            TraceEventType::CloseOk(result) => format!("{} -> Ok({})", alt, result),
+            TraceEventType::CloseError(e) => format!("{} -> Error({})", alt, e),
+            TraceEventType::CloseFailure(e) => format!("{} -> Failure({})", alt, e),
+            TraceEventType::CloseIncomplete(i) => format!("{} -> Error({:?})", alt, i),
+        };
+
+        #[cfg(feature = "trace-color")]
+        {
+            content = match &self.event {
+                TraceEventType::Open => content,
+                TraceEventType::CloseOk(_) => content.green().to_string(),
+                TraceEventType::CloseError(_) => content.red().to_string(),
+                TraceEventType::CloseFailure(_) => content.magenta().to_string(),
+                TraceEventType::CloseIncomplete(_) => content.yellow().to_string(),
+            };
+        }
+
+        writeln!(f, "{}{}{}", indent, content, ctx)
     }
 }

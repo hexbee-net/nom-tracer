@@ -1,19 +1,16 @@
 use {
+    crate::debug_print,
     nom::{bytes::complete::tag, sequence::tuple, IResult},
     nom_tracer::{
         get_trace,
         get_trace_for_tag,
-        print_trace,
-        print_trace_for_tag,
         tr,
         tr_ctx,
         tr_tag,
         tr_tag_ctx,
-        trace,
         TraceList,
         DEFAULT_TAG,
     },
-    std::io,
 };
 
 fn parse_ab(input: &str) -> IResult<&str, (&str, &str)> {
@@ -51,6 +48,7 @@ fn test_tr() {
     assert!(result.is_ok());
 
     let trace = get_trace();
+    debug_print(&trace);
     assert!(trace.contains("parse_ab"));
     assert!(trace.contains("-> Ok"));
 }
@@ -63,7 +61,7 @@ fn test_tr_ctx() {
     assert!(result.is_ok());
 
     let trace = get_trace();
-    println!("{:?}", trace);
+    debug_print(&trace);
     assert!(trace.contains("parse_cd"));
     assert!(trace.contains("custom"));
     assert!(trace.contains("-> Ok"));
@@ -77,6 +75,7 @@ fn test_tr_tag() {
     assert!(result.is_ok());
 
     let trace = get_trace_for_tag(custom_tag);
+    debug_print(&trace);
     assert!(trace.contains("parse_cd"));
     assert!(trace.contains("-> Ok"));
 }
@@ -89,6 +88,7 @@ fn test_tr_tag_ctx() {
     assert!(result.is_ok());
 
     let trace = get_trace_for_tag(custom_tag);
+    debug_print(&trace);
     assert!(trace.contains("parse_cd"));
     assert!(trace.contains("-> Ok"));
 }
@@ -104,6 +104,7 @@ fn test_trace_with_error() {
     assert!(result.is_err());
 
     let trace = get_trace();
+    debug_print(&trace);
     assert!(trace.contains("parse_fail"));
     assert!(trace.contains("-> Error"));
 }
@@ -122,6 +123,7 @@ fn test_nested_traces() {
     assert!(result.is_ok());
 
     let trace = get_trace();
+    debug_print(&trace);
     assert!(trace.contains("outer"));
     assert!(trace.contains("inner_a"));
     assert!(trace.contains("inner_b"));
