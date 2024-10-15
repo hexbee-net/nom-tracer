@@ -225,13 +225,44 @@ reset_trace!();
 reset_trace!(my_custom_tag);
 ```
 
-## Advanced Usage
+### `get_trace!`
 
-### Core Tracing Functions
+The `get_trace!` macro provides a convenient way to retrieve traces for either the default tag or a specified tag.
+
+```rust
+use nom_tracer::{trace, get_trace};
+use nom::bytes::complete::tag;
+
+let _ = trace!(tag("hello"))("hello world");
+let default_trace = get_trace!(); // Gets trace for default tag
+
+let _ = trace!(my_tag, tag("hello"))("hello world");
+let my_tag_trace = get_trace!(my_tag); // Gets trace for "my_tag"
+
+println!("Default trace:\n{}", default_trace);
+println!("My tag trace:\n{}", my_tag_trace);
+```
+
+### `print_trace!`
+
+The `print_trace!` macro provides a convenient way to print traces for either the default tag or a specified tag.
+
+```rust
+use nom_tracer::{trace, print_trace};
+use nom::bytes::complete::tag;
+
+let _ = trace!(tag("hello"))("hello world");
+print_trace!(); // Prints trace for default tag
+
+let _ = trace!(my_tag, tag("hello"))("hello world");
+print_trace!(my_tag); // Prints trace for "my_tag"
+```
+
+## Core Tracing Functions
 
 While the `trace!` macro is convenient for most use cases, `nom-tracer` also provides direct function calls for more advanced scenarios. These functions offer finer control over the tracing process and can be useful in situations where you need to dynamically determine tracing parameters or integrate with existing code structures.
 
-#### `tr`: Basic Tracing
+### `tr`: Basic Tracing
 
 The `tr` function is the simplest way to add tracing to a parser. It uses the default tag and no context.
 
@@ -251,7 +282,7 @@ fn parse_hello(input: &str) -> IResult<&str, &str> {
 }
 ```
 
-#### `tr_ctx`: Tracing with Context
+### `tr_ctx`: Tracing with Context
 
 `tr_ctx` allows you to specify a context string along with the parser name.
 
@@ -275,7 +306,7 @@ fn parse_greeting(input: &str) -> IResult<&str, &str> {
 }
 ```
 
-#### `tr_tag`: Tracing with Custom Tags
+### `tr_tag`: Tracing with Custom Tags
 
 `tr_tag` allows you to specify a custom tag for organizing traces.
 
@@ -299,7 +330,7 @@ fn parse_year(input: &str) -> IResult<&str, &str> {
 }
 ```
 
-#### `tr_tag_ctx`: Tracing with Custom Tags and Context
+### `tr_tag_ctx`: Tracing with Custom Tags and Context
 
 `tr_tag_ctx` is the most flexible function, allowing you to specify both a custom tag and a context.
 
@@ -330,7 +361,65 @@ fn parse_person(input: &str) -> IResult<&str, (&str, char, &str)> {
 }
 ```
 
-### Using Multiple Tags
+## Trace Retrieval functions
+
+`nom-tracer` provides several functions for retrieving and printing trace information:
+
+### Retrieving Traces
+
+#### `get_trace()`
+
+Retrieves the trace for the default tag.
+
+```rust
+use nom_tracer::{trace, get_trace};
+use nom::bytes::complete::tag;
+
+let _ = trace!(tag("hello"))("hello world");
+let trace = get_trace();
+println!("Default trace:\n{}", trace);
+```
+
+#### `get_trace_for_tag(tag: &'static str)`
+
+Retrieves the trace for a specific tag.
+
+```rust
+use nom_tracer::{trace, get_trace_for_tag};
+use nom::bytes::complete::tag;
+
+let _ = trace!(my_tag, tag("hello"))("hello world");
+let trace = get_trace_for_tag("my_tag");
+println!("My tag trace:\n{}", trace);
+```
+
+### Printing Traces
+
+#### `print_trace()`
+
+Prints the entire trace for the default tag to the console.
+
+```rust
+use nom_tracer::{trace, print_trace};
+use nom::bytes::complete::tag;
+
+let _ = trace!(tag("hello"))("hello world");
+print_trace();
+```
+
+#### `print_trace_for_tag(tag: &'static str)`
+
+Prints the trace for a specific tag to the console.
+
+```rust
+use nom_tracer::{trace, print_trace_for_tag};
+use nom::bytes::complete::tag;
+
+let _ = trace!(my_tag, tag("hello"))("hello world");
+print_trace_for_tag("my_tag");
+```
+
+## Using Multiple Tags
 
 You can use different tags to organize your traces into separate groups:
 
@@ -350,11 +439,11 @@ let name_traces = get_trace_for_tag("names");
 let number_traces = get_trace_for_tag("numbers");
 ```
 
-### Context Information
+## Context Information
 
 Context information in `nom-tracer` provides additional details about each parser's purpose or role. This feature is especially useful for error reporting and debugging complex parsers. When the `trace-context` feature is enabled, this context is included in both the trace output and error messages.
 
-#### Enabling the Feature
+### Enabling the Feature
 
 To use context information, enable the `trace-context` feature in your `Cargo.toml`:
 
@@ -363,7 +452,7 @@ To use context information, enable the `trace-context` feature in your `Cargo.to
 nom-tracer = { version = "0.1.0", features = ["trace-context"] }
 ```
 
-#### Adding Context
+### Adding Context
 
 You can add context using either the `trace!` macro or the `tr_ctx` and `tr_tag_ctx` functions:
 
@@ -391,7 +480,7 @@ fn parse_username(input: &str) -> IResult<&str, &str> {
 }
 ```
 
-#### Example with Error Handling
+### Example with Error Handling
 
 Here's an example that demonstrates how context information enhances error messages:
 
@@ -428,7 +517,7 @@ fn main() {
 
 In this example, if the input doesn't match the expected format, the error message will include the context of the parser that failed (in this case, "Parsing separator"), making it clear which part of the input caused the failure.
 
-#### Considerations
+### Considerations
 
 1. **Verbosity**: While context information is valuable, overly verbose contexts can clutter your code and trace output. Aim for concise yet informative context messages.
 
@@ -436,13 +525,13 @@ In this example, if the input doesn't match the expected format, the error messa
 
 By leveraging context information, you can significantly improve the debuggability and maintainability of your nom parsers, especially in larger and more complex parsing scenarios.
 
-### Real-time Printing with `trace-print`
+## Real-time Printing with `trace-print`
 
 The `trace-print` feature allows you to see trace events as they happen, providing immediate feedback during parser execution. This can be particularly useful for debugging complex parsers or those that might cause stack overflows.
 
 **Note**: The trace-print feature works in conjunction with the activation state of tags. Only trace events for activated tags will be printed in real-time. This means you can still control which parts of your parser generate output by activating or deactivating specific tags, even when using real-time printing.
 
-#### Enabling the Feature
+### Enabling the Feature
 
 To use real-time printing, you need to enable the `trace-print` feature in your `Cargo.toml`:
 
@@ -451,7 +540,7 @@ To use real-time printing, you need to enable the `trace-print` feature in your 
 nom-tracer = { version = "0.1.0", features = ["trace-print"] }
 ```
 
-#### Example Usage
+### Example Usage
 
 Here's an example of how you might use the `trace-print` feature:
 
@@ -474,7 +563,7 @@ fn main() {
 
 When you run this code with the `trace-print` feature enabled, you'll see trace events printed to the console in real-time as the parser executes, even before the final result is printed.
 
-#### Considerations
+### Considerations
 
 1. **Output Volume**: Real-time printing can generate a lot of console output, especially for complex parsers or large inputs. Be prepared for potentially verbose output.
 
@@ -504,13 +593,6 @@ nom-tracer = { version = "0.1.0", default-features = false }
 ### Trace: `trace`
 
 The `trace` feature is the core functionality of `nom-tracer`. When enabled, it allows you to wrap your parsers with tracing functions that record the execution flow of your parsing operations.
-
-To use the `trace` feature, add it to your `Cargo.toml`:
-
-```toml
-[dependencies]
-nom-tracer = { version = "0.1.0", features = ["trace"] }
-```
 
 ### Trace Color: `trace-color`
 

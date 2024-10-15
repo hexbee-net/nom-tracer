@@ -236,3 +236,27 @@ macro_rules! reset_trace (
         });
     };
 );
+
+/// Prints the trace for either the default tag or a specified tag.
+///
+/// # Examples
+///
+/// ```
+/// use nom_tracer::{trace, print_trace};
+/// use nom::bytes::complete::tag;
+///
+/// let _ = trace!(tag::<&str, &str, nom::error::VerboseError<_>>("hello"))("hello world");
+/// print_trace!(); // Prints trace for default tag
+///
+/// let _ = trace!(my_tag, tag::<&str, &str, nom::error::VerboseError<_>>("hello"))("hello world");
+/// print_trace!(my_tag); // Prints trace for "my_tag"
+/// ```
+#[macro_export]
+macro_rules! print_trace {
+    () => {
+        $crate::print_trace();
+    };
+    ($tag:ident) => {
+        $crate::print_trace_for_tag(stringify!($tag));
+    };
+}

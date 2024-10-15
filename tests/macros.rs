@@ -1,13 +1,17 @@
 // Copyright (c) Hexbee
 // SPDX-License-Identifier: Apache-2.0
 
-use nom::bytes::complete::tag;
-use nom::IResult;
-use nom::sequence::tuple;
 use {
-    nom_tracer::{activate_trace, deactivate_trace, get_trace, get_trace_for_tag, trace},
+    nom::{bytes::complete::tag, sequence::tuple, IResult},
+    nom_tracer::{
+        activate_trace,
+        deactivate_trace,
+        get_trace,
+        get_trace_for_tag,
+        reset_trace,
+        trace,
+    },
 };
-use nom_tracer::reset_trace;
 
 fn parse_ab(input: &str) -> IResult<&str, (&str, &str)> {
     tuple((tag("a"), tag("b")))(input)

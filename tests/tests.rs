@@ -5,7 +5,7 @@ mod functions;
 mod macros;
 
 #[allow(dead_code)]
-fn print_trace<I: AsRef<str>>(s: I) {
+fn debug_print<I: AsRef<str>>(s: I) {
     use {
         std::io::Write,
         termcolor::{ColorChoice, StandardStream},

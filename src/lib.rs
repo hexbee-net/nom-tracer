@@ -481,7 +481,47 @@ pub fn get_trace_for_tag(tag: &'static str) -> String {
     }
 }
 
-pub(crate) fn print_trace<I: AsRef<str>>(s: I) {
+/// Prints the entire trace for the default tag to the console.
+///
+/// This function retrieves the trace for the default tag using `get_trace()`
+/// and prints it to the console using the `print()` function.
+///
+/// # Examples
+///
+/// ```
+/// use nom_tracer::{trace, print_trace};
+/// use nom::bytes::complete::tag;
+///
+/// let _ = trace!(tag::<&str, &str, nom::error::VerboseError<_>>("hello"))("hello world");
+/// print_trace();
+/// ```
+pub fn print_trace() {
+    print(get_trace());
+}
+
+/// Prints the trace for a specific tag to the console.
+///
+/// This function retrieves the trace for the specified tag using `get_trace_for_tag()`
+/// and prints it to the console using the `print()` function.
+///
+/// # Arguments
+///
+/// * `tag` - A static string slice representing the tag for which to print the trace.
+///
+/// # Examples
+///
+/// ```
+/// use nom_tracer::{trace, print_trace_for_tag};
+/// use nom::bytes::complete::tag;
+///
+/// let _ = trace!(my_tag, tag::<&str, &str, nom::error::VerboseError<_>>("hello"))("hello world");
+/// print_trace_for_tag("my_tag");
+/// ```
+pub fn print_trace_for_tag(tag: &'static str) {
+    print(get_trace_for_tag(tag));
+}
+
+pub(crate) fn print<I: AsRef<str>>(s: I) {
     use std::io::Write;
 
     #[cfg(feature = "trace-color")]
@@ -501,9 +541,7 @@ pub(crate) fn print_trace<I: AsRef<str>>(s: I) {
 
 #[cfg(all(test, feature = "trace"))]
 mod tests {
-    use {
-        super::*,
-    };
+    use super::*;
 
     #[test]
     fn test_trace_list_new() {

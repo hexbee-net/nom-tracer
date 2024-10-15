@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(all(feature = "trace", feature = "trace-print"))]
-use crate::print_trace;
+use crate::print;
 use {
     crate::events::{TraceEvent, TraceEventType},
     nom::IResult,
@@ -50,7 +50,7 @@ impl Trace {
 
             #[cfg(all(feature = "trace", feature = "trace-print"))]
             {
-                print_trace(format!("{}", event));
+                print(format!("{}", event));
             }
 
             self.events.push(event);
@@ -92,7 +92,7 @@ impl Trace {
 
             #[cfg(all(feature = "trace", feature = "trace-print"))]
             {
-                print_trace(format!("{}", event));
+                print(format!("{}", event));
             }
 
             self.events.push(event);

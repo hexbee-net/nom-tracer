@@ -3,13 +3,17 @@ use {
     nom_tracer::{
         get_trace,
         get_trace_for_tag,
+        print_trace,
+        print_trace_for_tag,
         tr,
         tr_ctx,
         tr_tag,
         tr_tag_ctx,
+        trace,
         TraceList,
         DEFAULT_TAG,
     },
+    std::io,
 };
 
 fn parse_ab(input: &str) -> IResult<&str, (&str, &str)> {
