@@ -9,7 +9,7 @@
 ## Features
 
 - 🔍 Trace parser execution with minimal code changes
-- 🚀 **Near-zero overhead when disabled** - compile out all tracing code in release builds
+- 🚀 **Zero overhead when disabled** - compile out all tracing code in release builds
 - 🎨 Colorized output for easy reading (optional)
 - 🏷️ Support for multiple trace tags to organize parser traces
 - 📊 Hierarchical view of parser execution

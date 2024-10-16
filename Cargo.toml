@@ -20,11 +20,11 @@ termcolor = { version = "1.4.1", optional = true }
 termcolor = "1.4.1"
 
 [features]
-default = ["trace", "trace-context"]
+default = ["trace", "trace-print", "trace-context"]
 trace = []
 trace-color = ["trace", "dep:colored", "dep:termcolor"]
 trace-print = ["trace"]
-trace-context = []
+trace-context = ["trace"]
 
 [package.metadata.docs.rs]
 all-features = true

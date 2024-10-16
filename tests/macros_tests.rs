@@ -5,11 +5,15 @@ use {
     nom::{bytes::complete::tag, sequence::tuple, IResult},
     nom_tracer::{
         activate_trace,
+        activate_trace_print,
         deactivate_trace,
+        deactivate_trace_print,
         get_trace,
         get_trace_for_tag,
         reset_trace,
         trace,
+        DEFAULT_TAG,
+        NOM_TRACE,
     },
 };
 
@@ -153,6 +157,92 @@ fn test_deactivate_trace_with_tag() {
         trace_before, trace_after,
         "Trace should not change after deactivation"
     );
+}
+
+#[test]
+fn test_activate_trace_print() {
+    // Ensure trace print is initially deactivated
+    NOM_TRACE.with(|trace| {
+        assert!(!trace.borrow().traces[DEFAULT_TAG].print);
+    });
+
+    // Activate trace print
+    activate_trace_print!();
+
+    // Check if trace print is now activated
+    NOM_TRACE.with(|trace| {
+        assert!(trace.borrow().traces[DEFAULT_TAG].print);
+    });
+
+    // Test with a custom tag
+    activate_trace_print!(custom_tag);
+
+    NOM_TRACE.with(|trace| {
+        assert!(trace.borrow().traces["custom_tag"].print);
+    });
+}
+
+#[test]
+fn test_deactivate_trace_print() {
+    // First, activate trace print
+    activate_trace_print!();
+
+    // Ensure trace print is initially activated
+    NOM_TRACE.with(|trace| {
+        assert!(trace.borrow().traces[DEFAULT_TAG].print);
+    });
+
+    // Deactivate trace print
+    deactivate_trace_print!();
+
+    // Check if trace print is now deactivated
+    NOM_TRACE.with(|trace| {
+        assert!(!trace.borrow().traces[DEFAULT_TAG].print);
+    });
+
+    // Test with a custom tag
+    activate_trace_print!(custom_tag);
+    deactivate_trace_print!(custom_tag);
+
+    NOM_TRACE.with(|trace| {
+        assert!(!trace.borrow().traces["custom_tag"].print);
+    });
+}
+
+#[test]
+fn test_activate_deactivate_trace_print_interaction() {
+    // Activate trace print for default tag
+    activate_trace_print!();
+
+    // Activate trace print for custom tag
+    activate_trace_print!(custom_tag);
+
+    // Verify both are activated
+    NOM_TRACE.with(|trace| {
+        let trace = trace.borrow();
+        assert!(trace.traces[DEFAULT_TAG].print);
+        assert!(trace.traces["custom_tag"].print);
+    });
+
+    // Deactivate trace print for default tag
+    deactivate_trace_print!();
+
+    // Verify only custom tag is still activated
+    NOM_TRACE.with(|trace| {
+        let trace = trace.borrow();
+        assert!(!trace.traces[DEFAULT_TAG].print);
+        assert!(trace.traces["custom_tag"].print);
+    });
+
+    // Deactivate trace print for custom tag
+    deactivate_trace_print!(custom_tag);
+
+    // Verify both are deactivated
+    NOM_TRACE.with(|trace| {
+        let trace = trace.borrow();
+        assert!(!trace.traces[DEFAULT_TAG].print);
+        assert!(!trace.traces["custom_tag"].print);
+    });
 }
 
 #[test]

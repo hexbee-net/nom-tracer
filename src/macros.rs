@@ -127,10 +127,18 @@ macro_rules! trace {
 #[cfg(not(feature = "trace"))]
 #[macro_export]
 macro_rules! trace {
-    ($parser:expr $(,)?) => {{ $parser }};
-    ($tag:ident, $parser:expr $(,)?) => {{ $parser }};
-    ($context:expr, $parser:expr $(,)?) => {{ $parser }};
-    ($tag:ident, $context:expr, $parser:expr $(,)?) => {{ $parser }};
+    ($parser:expr $(,)?) => {{
+        $parser
+    }};
+    ($tag:ident, $parser:expr $(,)?) => {{
+        $parser
+    }};
+    ($context:expr, $parser:expr $(,)?) => {{
+        $parser
+    }};
+    ($tag:ident, $context:expr, $parser:expr $(,)?) => {{
+        $parser
+    }};
 }
 
 /// Activates tracing for either the default tag or a specified tag.
@@ -219,6 +227,112 @@ macro_rules! deactivate_trace (
 #[cfg(not(feature = "trace"))]
 #[macro_export]
 macro_rules! deactivate_trace (
+    () => {};
+    ($tag:ident) => {};
+);
+
+// ... [previous code remains unchanged]
+
+/// Activates real-time printing of trace events for either the default tag or a specified tag.
+///
+/// When activated, trace events will be printed to the console as they occur, providing
+/// immediate feedback during parser execution. This can be particularly useful for
+/// debugging complex parsers or those that might cause stack overflows.
+///
+/// # Examples
+///
+/// Activate real-time printing for the default tag:
+///
+/// ```
+/// use nom_tracer::activate_trace_print;
+///
+/// activate_trace_print!();
+/// // Real-time printing is now active for parsers using the default tag
+/// ```
+///
+/// Activate real-time printing for a custom tag:
+///
+/// ```
+/// use nom_tracer::activate_trace_print;
+///
+/// activate_trace_print!(my_custom_tag);
+/// // Real-time printing is now active for parsers using the "my_custom_tag" tag
+/// ```
+///
+/// # Note
+///
+/// This macro works in conjunction with the activation state of tags. Only trace events
+/// for activated tags will be printed in real-time. Make sure to activate the tag using
+/// the `activate_trace!` macro if it's not already active.
+#[cfg(feature = "trace")]
+#[macro_export]
+macro_rules! activate_trace_print (
+    () => {
+        $crate::NOM_TRACE.with(|trace| {
+            trace.borrow_mut().activate_trace_print($crate::DEFAULT_TAG);
+        });
+    };
+    ($tag:ident) => {
+        $crate::NOM_TRACE.with(|trace| {
+            trace.borrow_mut().activate_trace_print(stringify!($tag));
+        });
+    };
+);
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! activate_trace_print (
+    () => {};
+    ($tag:ident) => {};
+);
+
+/// Deactivates real-time printing of trace events for either the default tag or a specified tag.
+///
+/// When deactivated, trace events will no longer be printed to the console as they occur.
+/// Previously recorded events are retained and can still be accessed through other trace
+/// retrieval methods.
+///
+/// # Examples
+///
+/// Deactivate real-time printing for the default tag:
+///
+/// ```
+/// use nom_tracer::deactivate_trace_print;
+///
+/// deactivate_trace_print!();
+/// // Real-time printing is now inactive for parsers using the default tag
+/// ```
+///
+/// Deactivate real-time printing for a custom tag:
+///
+/// ```
+/// use nom_tracer::deactivate_trace_print;
+///
+/// deactivate_trace_print!(my_custom_tag);
+/// // Real-time printing is now inactive for parsers using the "my_custom_tag" tag
+/// ```
+///
+/// # Note
+///
+/// Deactivating real-time printing does not deactivate tracing itself. Trace events will
+/// still be recorded and can be retrieved using other methods like `get_trace!` or `print_trace!`.
+#[cfg(feature = "trace")]
+#[macro_export]
+macro_rules! deactivate_trace_print (
+    () => {
+        $crate::NOM_TRACE.with(|trace| {
+            trace.borrow_mut().deactivate_trace_print($crate::DEFAULT_TAG);
+        });
+    };
+
+    ($tag:ident) => {
+        $crate::NOM_TRACE.with(|trace| {
+            trace.borrow_mut().deactivate_trace_print(stringify!($tag));
+        });
+    };
+);
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! deactivate_trace_print (
     () => {};
     ($tag:ident) => {};
 );

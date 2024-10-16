@@ -1,10 +1,11 @@
 // Copyright (c) Hexbee
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(all(feature = "trace", feature = "trace-print"))]
-use crate::print;
 use {
-    crate::events::{TraceEvent, TraceEventType},
+    crate::{
+        events::{TraceEvent, TraceEventType},
+        print,
+    },
     nom::IResult,
     std::fmt::{Debug, Display, Formatter},
 };
@@ -19,6 +20,7 @@ pub struct Trace {
     pub events: Vec<TraceEvent>,
     pub level: usize,
     pub active: bool,
+    pub print: bool,
     pub panic_on_level: Option<usize>,
 }
 
@@ -28,6 +30,7 @@ impl Default for Trace {
             events: Vec::new(),
             level: 0,
             active: true,
+            print: false,
             panic_on_level: None,
         }
     }
@@ -68,7 +71,9 @@ impl Trace {
 
             #[cfg(all(feature = "trace", feature = "trace-print"))]
             {
-                print(format!("{}", event));
+                if self.print {
+                    print(format!("{}", event));
+                }
             }
 
             self.events.push(event);
@@ -110,7 +115,9 @@ impl Trace {
 
             #[cfg(all(feature = "trace", feature = "trace-print"))]
             {
-                print(format!("{}", event));
+                if self.print {
+                    print(format!("{}", event));
+                }
             }
 
             self.events.push(event);

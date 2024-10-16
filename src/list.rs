@@ -62,6 +62,24 @@ impl TraceList {
         t.active = false;
     }
 
+    /// Activates real-time printing of trace events for the given tag.
+    ///
+    /// When activated, trace events will be printed as they occur.
+    /// If the trace doesn't exist, a new one is created with real-time printing enabled.
+    pub fn activate_trace_print(&mut self, tag: &'static str) {
+        let t = self.traces.entry(tag).or_insert(Trace::default());
+        t.print = true;
+    }
+
+    /// Deactivates real-time printing of trace events for the given tag.
+    ///
+    /// When deactivated, trace events will not be printed as they occur.
+    /// If the trace doesn't exist, a new one is created with real-time printing disabled.
+    pub fn deactivate_trace_print(&mut self, tag: &'static str) {
+        let t = self.traces.entry(tag).or_insert(Trace::default());
+        t.print = false;
+    }
+
     /// Sets the maximum nesting level for the trace of the given tag before triggering a panic.
     ///
     /// This method allows setting a limit on how deep the parsing can go before it's considered
@@ -181,6 +199,41 @@ mod tests {
         assert!(!trace_list.traces[DEFAULT_TAG].active);
         trace_list.activate(DEFAULT_TAG);
         assert!(trace_list.traces[DEFAULT_TAG].active);
+    }
+
+    #[test]
+    fn test_activate_trace_print() {
+        let mut trace_list = TraceList::new();
+
+        // Initially, print should be false
+        assert!(!trace_list.traces[DEFAULT_TAG].print);
+
+        trace_list.activate_trace_print(DEFAULT_TAG);
+        assert!(trace_list.traces[DEFAULT_TAG].print);
+
+        // Test with a custom tag
+        let custom_tag = "custom_tag";
+        trace_list.activate_trace_print(custom_tag);
+        assert!(trace_list.traces[custom_tag].print);
+    }
+
+    #[test]
+    fn test_deactivate_trace_print() {
+        let mut trace_list = TraceList::new();
+
+        // Activate print first
+        trace_list.activate_trace_print(DEFAULT_TAG);
+        assert!(trace_list.traces[DEFAULT_TAG].print);
+
+        // Now deactivate
+        trace_list.deactivate_trace_print(DEFAULT_TAG);
+        assert!(!trace_list.traces[DEFAULT_TAG].print);
+
+        // Test with a custom tag
+        let custom_tag = "custom_tag";
+        trace_list.activate_trace_print(custom_tag);
+        trace_list.deactivate_trace_print(custom_tag);
+        assert!(!trace_list.traces[custom_tag].print);
     }
 
     #[test]
