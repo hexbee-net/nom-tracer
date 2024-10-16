@@ -15,7 +15,6 @@ use {
 /// A [Trace] maintains a list of events, a current nesting level, and an active state.
 /// The nesting level represents the depth of the current parsing operation in the overall
 /// structure of the parser combinators.
-#[cfg(feature = "trace")]
 pub struct Trace {
     pub events: Vec<TraceEvent>,
     pub level: usize,
@@ -36,7 +35,6 @@ impl Default for Trace {
     }
 }
 
-#[cfg(feature = "trace")]
 impl Trace {
     /// Resets the trace, clearing all events and setting the level to 0.
     pub fn reset(&mut self) {
@@ -69,7 +67,7 @@ impl Trace {
                 event: TraceEventType::Open,
             };
 
-            #[cfg(all(feature = "trace", feature = "trace-print"))]
+            #[cfg(feature = "trace-print")]
             {
                 if self.print {
                     print(format!("{}", event));
@@ -113,7 +111,7 @@ impl Trace {
                 event: event_type,
             };
 
-            #[cfg(all(feature = "trace", feature = "trace-print"))]
+            #[cfg(feature = "trace-print")]
             {
                 if self.print {
                     print(format!("{}", event));
@@ -125,7 +123,6 @@ impl Trace {
     }
 }
 
-#[cfg(feature = "trace")]
 impl Display for Trace {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for event in self.events.iter() {

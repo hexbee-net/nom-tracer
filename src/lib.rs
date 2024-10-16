@@ -9,13 +9,16 @@ use {
     std::fmt::Debug,
 };
 
+#[cfg(feature = "trace")]
 pub mod events;
+#[cfg(feature = "trace")]
 pub mod list;
+#[cfg(feature = "trace")]
 pub mod macros;
+#[cfg(feature = "trace")]
 pub mod traces;
 
 /// The default tag used when no specific tag is provided.
-#[cfg(feature = "trace")]
 pub const DEFAULT_TAG: &str = "default";
 
 thread_local! {

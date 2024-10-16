@@ -12,13 +12,11 @@ use {
 /// The tag system allows for multiple independent traces to be maintained simultaneously.
 /// Each tag corresponds to a separate `Trace` instance, allowing for organization and
 /// separation of trace events based on different criteria (e.g., parser type, subsystem, etc.).
-#[cfg(feature = "trace")]
 #[derive(Default)]
 pub struct TraceList {
     pub traces: HashMap<&'static str, Trace>,
 }
 
-#[cfg(feature = "trace")]
 impl TraceList {
     /// Creates a new [TraceList] with a default trace.
     ///

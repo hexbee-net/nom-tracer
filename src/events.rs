@@ -13,7 +13,6 @@ use std::fmt::{Display, Formatter};
 /// - CloseError: Parser encountered a recoverable error
 /// - CloseFailure: Parser encountered an unrecoverable error
 /// - CloseIncomplete: Parser needs more input to complete
-#[cfg(feature = "trace")]
 #[derive(Clone, Debug)]
 pub enum TraceEventType {
     Open,
@@ -30,7 +29,6 @@ pub enum TraceEventType {
 /// - The input string at that point
 /// - The location (usually a function or parser name)
 /// - The type of event (open, close with result)
-#[cfg(feature = "trace")]
 #[derive(Clone)]
 pub struct TraceEvent {
     pub level: usize,
@@ -40,7 +38,6 @@ pub struct TraceEvent {
     pub event: TraceEventType,
 }
 
-#[cfg(feature = "trace")]
 impl Display for TraceEvent {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let location = self.location;
