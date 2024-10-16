@@ -19,6 +19,7 @@ pub struct Trace {
     pub events: Vec<TraceEvent>,
     pub level: usize,
     pub active: bool,
+    #[cfg(feature = "trace-print")]
     pub print: bool,
     pub panic_on_level: Option<usize>,
 }
@@ -29,6 +30,7 @@ impl Default for Trace {
             events: Vec::new(),
             level: 0,
             active: true,
+            #[cfg(feature = "trace-print")]
             print: false,
             panic_on_level: None,
         }

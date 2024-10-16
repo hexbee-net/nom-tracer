@@ -264,7 +264,7 @@ macro_rules! deactivate_trace (
 /// This macro works in conjunction with the activation state of tags. Only trace events
 /// for activated tags will be printed in real-time. Make sure to activate the tag using
 /// the `activate_trace!` macro if it's not already active.
-#[cfg(feature = "trace")]
+#[cfg(all(feature = "trace", feature = "trace-print"))]
 #[macro_export]
 macro_rules! activate_trace_print (
     () => {
@@ -278,7 +278,7 @@ macro_rules! activate_trace_print (
         });
     };
 );
-#[cfg(not(feature = "trace"))]
+#[cfg(not(all(feature = "trace", feature = "trace-print")))]
 #[macro_export]
 macro_rules! activate_trace_print (
     () => {};

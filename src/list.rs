@@ -64,6 +64,7 @@ impl TraceList {
     ///
     /// When activated, trace events will be printed as they occur.
     /// If the trace doesn't exist, a new one is created with real-time printing enabled.
+    #[cfg(feature = "trace-print")]
     pub fn activate_trace_print(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.print = true;
@@ -73,6 +74,7 @@ impl TraceList {
     ///
     /// When deactivated, trace events will not be printed as they occur.
     /// If the trace doesn't exist, a new one is created with real-time printing disabled.
+    #[cfg(feature = "trace-print")]
     pub fn deactivate_trace_print(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.print = false;
