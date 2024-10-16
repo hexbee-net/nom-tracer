@@ -160,6 +160,7 @@ fn test_deactivate_trace_with_tag() {
 }
 
 #[test]
+#[cfg(feature = "trace-print")]
 fn test_activate_trace_print() {
     // Ensure trace print is initially deactivated
     NOM_TRACE.with(|trace| {
@@ -183,6 +184,7 @@ fn test_activate_trace_print() {
 }
 
 #[test]
+#[cfg(feature = "trace-print")]
 fn test_deactivate_trace_print() {
     // First, activate trace print
     activate_trace_print!();
@@ -210,6 +212,7 @@ fn test_deactivate_trace_print() {
 }
 
 #[test]
+#[cfg(feature = "trace-print")]
 fn test_activate_deactivate_trace_print_interaction() {
     // Activate trace print for default tag
     activate_trace_print!();

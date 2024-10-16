@@ -52,4 +52,4 @@ check:
 # run the unit tests.
 @test:
   echo "Running tests..."
-  cargo nextest run
+  cargo nextest run --all-features

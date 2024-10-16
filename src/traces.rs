@@ -1,11 +1,10 @@
 // Copyright (c) Hexbee
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "trace-print")]
+use crate::print;
 use {
-    crate::{
-        events::{TraceEvent, TraceEventType},
-        print,
-    },
+    crate::events::{TraceEvent, TraceEventType},
     nom::IResult,
     std::fmt::{Debug, Display, Formatter},
 };
@@ -55,6 +54,7 @@ impl Trace {
         location: &'static str,
     ) {
         if self.active {
+            #[cfg(feature = "trace-max-level")]
             if let Some(level) = self.panic_on_level {
                 if self.level >= level {
                     panic!("Max level reached: {}", level);
@@ -70,14 +70,11 @@ impl Trace {
             };
 
             #[cfg(feature = "trace-print")]
-            {
-                if self.print {
-                    print(format!("{}", event));
-                }
+            if self.print {
+                print(format!("{}", event));
             }
 
             self.events.push(event);
-
             self.level += 1;
         }
     }
@@ -98,6 +95,7 @@ impl Trace {
     ) {
         if self.active {
             self.level -= 1;
+
             let event_type = match result {
                 Ok((_, o)) => TraceEventType::CloseOk(format!("{:?}", o)),
                 Err(nom::Err::Error(e)) => TraceEventType::CloseError(format!("{:?}", e)),
@@ -114,10 +112,8 @@ impl Trace {
             };
 
             #[cfg(feature = "trace-print")]
-            {
-                if self.print {
-                    print(format!("{}", event));
-                }
+            if self.print {
+                print(format!("{}", event));
             }
 
             self.events.push(event);

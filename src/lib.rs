@@ -252,22 +252,17 @@ where
             });
 
             #[cfg(feature = "trace-context")]
-            {
-                match res {
-                    Ok(o) => Ok(o),
-                    Err(nom::Err::Error(e)) => {
-                        Err(nom::Err::Error(E::add_context(input3, name, e)))
-                    }
-                    Err(nom::Err::Failure(e)) => {
-                        Err(nom::Err::Failure(E::add_context(input3, name, e)))
-                    }
-                    Err(nom::Err::Incomplete(i)) => Err(nom::Err::Incomplete(i)),
+            match res {
+                Ok(o) => Ok(o),
+                Err(nom::Err::Error(e)) => Err(nom::Err::Error(E::add_context(input3, name, e))),
+                Err(nom::Err::Failure(e)) => {
+                    Err(nom::Err::Failure(E::add_context(input3, name, e)))
                 }
+                Err(nom::Err::Incomplete(i)) => Err(nom::Err::Incomplete(i)),
             }
+
             #[cfg(not(feature = "trace-context"))]
-            {
-                res
-            }
+            res
         }
     }
 
@@ -283,9 +278,7 @@ where
             }
         }
         #[cfg(not(feature = "trace-context"))]
-        {
-            move |input: I| parser.parse(input)
-        }
+        move |input: I| parser.parse(input)
     }
 }
 

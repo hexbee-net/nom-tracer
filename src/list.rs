@@ -92,19 +92,7 @@ impl TraceList {
     /// * `level` - An `Option<usize>` specifying the maximum allowed nesting level.
     ///   - `Some(n)`: Sets the maximum level to `n`. The parser will panic if it reaches level `n+1`.
     ///   - `None`: Removes any previously set limit, allowing unlimited nesting.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use nom_tracer::list::TraceList;
-    /// let mut trace_list = TraceList::new();
-    ///
-    /// // Set maximum nesting level to 5 for the default tag
-    /// trace_list.panic_on_level(nom_tracer::DEFAULT_TAG, Some(5));
-    ///
-    /// // Remove the nesting level limit for a custom tag
-    /// trace_list.panic_on_level("my_custom_tag", None);
-    /// ```
+    #[cfg(feature = "trace-max-level")]
     pub fn panic_on_level(&mut self, tag: &'static str, level: Option<usize>) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.panic_on_level = level;
@@ -202,6 +190,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "trace-print")]
     fn test_activate_trace_print() {
         let mut trace_list = TraceList::new();
 
@@ -218,6 +207,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "trace-print")]
     fn test_deactivate_trace_print() {
         let mut trace_list = TraceList::new();
 
@@ -237,6 +227,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "trace-max-level")]
     fn test_panic_on_level_set() {
         let mut trace_list = TraceList::new();
         trace_list.panic_on_level(DEFAULT_TAG, Some(5));
@@ -244,6 +235,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "trace-max-level")]
     fn test_panic_on_level_remove() {
         let mut trace_list = TraceList::new();
         trace_list.panic_on_level(DEFAULT_TAG, Some(5));
@@ -253,6 +245,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Max level reached: 3")]
+    #[cfg(feature = "trace-max-level")]
     fn test_panic_on_level_trigger() {
         let mut trace_list = TraceList::new();
         trace_list.panic_on_level(DEFAULT_TAG, Some(3));
@@ -267,6 +260,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "trace-max-level")]
     fn test_panic_on_level_not_triggered() {
         let mut trace_list = TraceList::new();
         trace_list.panic_on_level(DEFAULT_TAG, Some(5));

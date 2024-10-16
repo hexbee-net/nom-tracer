@@ -422,7 +422,7 @@ macro_rules! reset_trace (
 /// set_max_level!(None);
 /// // Removes the nesting level limit for the default tag
 /// ```
-#[cfg(feature = "trace")]
+#[cfg(all(feature = "trace", feature = "trace-max-level"))]
 #[macro_export]
 macro_rules! set_max_level (
     ($level:expr) => {
@@ -436,7 +436,7 @@ macro_rules! set_max_level (
         });
     };
 );
-#[cfg(not(feature = "trace"))]
+#[cfg(not(all(feature = "trace", feature = "trace-max-level")))]
 #[macro_export]
 macro_rules! set_max_level (
     ($level:expr) => {};
