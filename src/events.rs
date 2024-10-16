@@ -2,17 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(feature = "trace-color")]
-use colored::Colorize;
+use crate::ansi;
 use std::fmt::{Display, Formatter};
 
-/// Represents the type of a trace event.
-///
-/// This enum captures the different states of a parsing operation:
-/// - Open: Beginning of a parsing operation
-/// - CloseOk: Successful completion of a parsing operation
-/// - CloseError: Parser encountered a recoverable error
-/// - CloseFailure: Parser encountered an unrecoverable error
-/// - CloseIncomplete: Parser needs more input to complete
 #[derive(Clone, Debug)]
 pub enum TraceEventType {
     Open,
@@ -22,39 +14,21 @@ pub enum TraceEventType {
     CloseIncomplete(nom::Needed),
 }
 
-/// Represents a single trace event.
-///
-/// Each event includes:
-/// - The nesting level at which it occurred
-/// - The input string at that point
-/// - The location (usually a function or parser name)
-/// - The type of event (open, close with result)
 #[derive(Clone)]
 pub struct TraceEvent {
     pub level: usize,
+    pub location: &'static str,
     pub context: Option<&'static str>,
     pub input: String,
-    pub location: &'static str,
     pub event: TraceEventType,
 }
 
 impl Display for TraceEvent {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let location = self.location;
-        #[allow(unused_mut)]
-        let mut input = self.input.clone();
         let indent = "| ".repeat(self.level);
 
-        #[cfg(feature = "trace-color")]
-        {
-            input = input.on_bright_blue().to_string();
-        }
-
-        let alt = if f.alternate() {
-            format!("{}(\"{}\")", location, input)
-        } else {
-            "".to_string()
-        };
+        #[allow(unused_mut)]
+        let mut input = self.input.clone();
 
         #[allow(unused_mut)]
         let mut ctx = if let Some(context) = self.context {
@@ -65,31 +39,174 @@ impl Display for TraceEvent {
 
         #[cfg(feature = "trace-color")]
         {
-            ctx = ctx.on_cyan().to_string();
+            ctx = format!("{}{}", ansi::BG_BRIGHT_BLUE, ctx);
         }
-
-        #[allow(unused_mut)]
-        let mut content = match &self.event {
-            TraceEventType::Open => {
-                format!("{}(\"{}\")", self.location, input,)
-            }
-            TraceEventType::CloseOk(result) => format!("{} -> Ok({})", alt, result),
-            TraceEventType::CloseError(e) => format!("{} -> Error({})", alt, e),
-            TraceEventType::CloseFailure(e) => format!("{} -> Failure({})", alt, e),
-            TraceEventType::CloseIncomplete(i) => format!("{} -> Error({:?})", alt, i),
-        };
 
         #[cfg(feature = "trace-color")]
         {
-            content = match &self.event {
-                TraceEventType::Open => content,
-                TraceEventType::CloseOk(_) => content.green().to_string(),
-                TraceEventType::CloseError(_) => content.red().to_string(),
-                TraceEventType::CloseFailure(_) => content.magenta().to_string(),
-                TraceEventType::CloseIncomplete(_) => content.yellow().to_string(),
+            let content = match &self.event {
+                TraceEventType::Open => {
+                    let input = format!(
+                        "{}{}{}",
+                        ansi::TEXT_INVERSE,
+                        input,
+                        ansi::TEXT_INVERSE_RESET
+                    );
+                    format!(
+                        "{}{}{}(\"{}\")",
+                        ansi::TEXT_UNDERLINE,
+                        self.location,
+                        ansi::TEXT_UNDERLINE_RESET,
+                        input
+                    )
+                }
+                TraceEventType::CloseOk(result) => format!(
+                    "{}-> Ok({}{}{})",
+                    ansi::FG_BRIGHT_GREEN,
+                    ansi::TEXT_INVERSE,
+                    result,
+                    ansi::TEXT_INVERSE_RESET
+                ),
+                TraceEventType::CloseError(e) => format!(
+                    "{}-> Error({}{}{})",
+                    ansi::FG_BRIGHT_RED,
+                    ansi::TEXT_INVERSE,
+                    e,
+                    ansi::TEXT_INVERSE_RESET
+                ),
+                TraceEventType::CloseFailure(e) => format!(
+                    "{}-> Failure({}{}{})",
+                    ansi::FG_BRIGHT_MAGENTA,
+                    ansi::TEXT_INVERSE,
+                    e,
+                    ansi::TEXT_INVERSE_RESET
+                ),
+                TraceEventType::CloseIncomplete(i) => format!(
+                    "{}-> Incomplete({}{:?}{})",
+                    ansi::FG_BRIGHT_YELLOW,
+                    ansi::TEXT_INVERSE,
+                    i,
+                    ansi::TEXT_INVERSE_RESET
+                ),
             };
+
+            return writeln!(
+                f,
+                "{}{}{}{}{}",
+                indent,
+                content,
+                ansi::FG_BLACK,
+                ctx,
+                ansi::RESET
+            );
         }
 
-        writeln!(f, "{}{}{}", indent, content, ctx)
+        #[cfg(not(feature = "trace-color"))]
+        {
+            let content = match &self.event {
+                TraceEventType::Open => format!("{}(\"{}\")", self.location, input),
+                TraceEventType::CloseOk(result) => format!("-> Ok({})", result),
+                TraceEventType::CloseError(e) => format!("-> Error({})", e),
+                TraceEventType::CloseFailure(e) => format!("-> Failure({})", e),
+                TraceEventType::CloseIncomplete(i) => format!("-> Incomplete({:?})", i),
+            };
+
+            writeln!(f, "{}{}{}", indent, content, ctx)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        crate::events::{TraceEvent, TraceEventType},
+        std::num::NonZero,
+    };
+
+    #[test]
+    fn test_display_open() {
+        println!(
+            "{}",
+            format!(
+                "{:#}",
+                TraceEvent {
+                    level: 2,
+                    location: "test_location",
+                    context: Some("test_context"),
+                    input: "test_input".to_string(),
+                    event: TraceEventType::Open,
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn test_display_close_ok() {
+        println!(
+            "{}",
+            format!(
+                "{:#}",
+                TraceEvent {
+                    level: 2,
+                    location: "test_location",
+                    context: Some("test_context"),
+                    input: "test_input".to_string(),
+                    event: TraceEventType::CloseOk("ok".to_string()),
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn test_display_close_error() {
+        println!(
+            "{}",
+            format!(
+                "{:#}",
+                TraceEvent {
+                    level: 2,
+                    location: "test_location",
+                    context: Some("test_context"),
+                    input: "test_input".to_string(),
+                    event: TraceEventType::CloseError("error".to_string()),
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn test_display_close_failure() {
+        println!(
+            "{}",
+            format!(
+                "{:#}",
+                TraceEvent {
+                    level: 2,
+                    location: "test_location",
+                    context: Some("test_context"),
+                    input: "test_input".to_string(),
+                    event: TraceEventType::CloseFailure("failure".to_string()),
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn test_display_close_incomplete() {
+        println!(
+            "{}",
+            format!(
+                "{:#}",
+                TraceEvent {
+                    level: 2,
+                    location: "test_location",
+                    context: Some("test_context"),
+                    input: "test_input".to_string(),
+                    event: TraceEventType::CloseIncomplete(nom::Needed::Size(
+                        NonZero::new(5).unwrap()
+                    )),
+                }
+            )
+        );
     }
 }
