@@ -399,32 +399,32 @@ macro_rules! reset_trace (
 /// Set a maximum level for the default tag:
 ///
 /// ```
-/// use nom_tracer::max_level;
+/// use nom_tracer::set_max_level;
 ///
-/// max_level!(Some(10));
+/// set_max_level!(Some(10));
 /// // Tracing will panic if nesting exceeds 10 levels for the default tag
 /// ```
 ///
 /// Set a maximum level for a custom tag:
 ///
 /// ```
-/// use nom_tracer::max_level;
+/// use nom_tracer::set_max_level;
 ///
-/// max_level!(my_custom_tag, Some(5));
+/// set_max_level!(my_custom_tag, Some(5));
 /// // Tracing will panic if nesting exceeds 5 levels for "my_custom_tag"
 /// ```
 ///
 /// Remove the level limit:
 ///
 /// ```
-/// use nom_tracer::max_level;
+/// use nom_tracer::set_max_level;
 ///
-/// max_level!(None);
+/// set_max_level!(None);
 /// // Removes the nesting level limit for the default tag
 /// ```
 #[cfg(feature = "trace")]
 #[macro_export]
-macro_rules! max_level (
+macro_rules! set_max_level (
     ($level:expr) => {
         $crate::NOM_TRACE.with(|trace| {
             trace.borrow_mut().panic_on_level($crate::DEFAULT_TAG, $level);
@@ -438,7 +438,7 @@ macro_rules! max_level (
 );
 #[cfg(not(feature = "trace"))]
 #[macro_export]
-macro_rules! max_level (
+macro_rules! set_max_level (
     ($level:expr) => {};
     ($tag:ident, $level:expr) => {};
 );
