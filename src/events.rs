@@ -90,7 +90,7 @@ impl Display for TraceEvent {
                 ),
             };
 
-            return writeln!(
+            writeln!(
                 f,
                 "{}{}{}{}{}",
                 indent,
@@ -98,7 +98,7 @@ impl Display for TraceEvent {
                 ansi::FG_BLACK,
                 ctx,
                 ansi::RESET
-            );
+            )
         }
 
         #[cfg(not(feature = "trace-color"))]
@@ -126,87 +126,70 @@ mod tests {
     #[test]
     fn test_display_open() {
         println!(
-            "{}",
-            format!(
-                "{:#}",
-                TraceEvent {
-                    level: 2,
-                    location: "test_location",
-                    context: Some("test_context"),
-                    input: "test_input".to_string(),
-                    event: TraceEventType::Open,
-                }
-            )
+            "{:#}",
+            TraceEvent {
+                level: 2,
+                location: "test_location",
+                context: Some("test_context"),
+                input: "test_input".to_string(),
+                event: TraceEventType::Open,
+            }
         );
     }
 
     #[test]
     fn test_display_close_ok() {
         println!(
-            "{}",
-            format!(
-                "{:#}",
-                TraceEvent {
-                    level: 2,
-                    location: "test_location",
-                    context: Some("test_context"),
-                    input: "test_input".to_string(),
-                    event: TraceEventType::CloseOk("ok".to_string()),
-                }
-            )
+            "{:#}",
+            TraceEvent {
+                level: 2,
+                location: "test_location",
+                context: Some("test_context"),
+                input: "test_input".to_string(),
+                event: TraceEventType::CloseOk("ok".to_string()),
+            }
         );
     }
 
     #[test]
     fn test_display_close_error() {
         println!(
-            "{}",
-            format!(
-                "{:#}",
-                TraceEvent {
-                    level: 2,
-                    location: "test_location",
-                    context: Some("test_context"),
-                    input: "test_input".to_string(),
-                    event: TraceEventType::CloseError("error".to_string()),
-                }
-            )
+            "{:#}",
+            TraceEvent {
+                level: 2,
+                location: "test_location",
+                context: Some("test_context"),
+                input: "test_input".to_string(),
+                event: TraceEventType::CloseError("error".to_string()),
+            }
         );
     }
 
     #[test]
     fn test_display_close_failure() {
         println!(
-            "{}",
-            format!(
-                "{:#}",
-                TraceEvent {
-                    level: 2,
-                    location: "test_location",
-                    context: Some("test_context"),
-                    input: "test_input".to_string(),
-                    event: TraceEventType::CloseFailure("failure".to_string()),
-                }
-            )
+            "{:#}",
+            TraceEvent {
+                level: 2,
+                location: "test_location",
+                context: Some("test_context"),
+                input: "test_input".to_string(),
+                event: TraceEventType::CloseFailure("failure".to_string()),
+            }
         );
     }
 
     #[test]
     fn test_display_close_incomplete() {
         println!(
-            "{}",
-            format!(
-                "{:#}",
-                TraceEvent {
-                    level: 2,
-                    location: "test_location",
-                    context: Some("test_context"),
-                    input: "test_input".to_string(),
-                    event: TraceEventType::CloseIncomplete(nom::Needed::Size(
-                        NonZero::new(5).unwrap()
-                    )),
-                }
-            )
+            "{:#}",
+            TraceEvent {
+                level: 2,
+                location: "test_location",
+                context: Some("test_context"),
+                input: "test_input".to_string(),
+                event: TraceEventType::CloseIncomplete(nom::Needed::Size(NonZero::new(5).unwrap())),
+            }
         );
     }
 }

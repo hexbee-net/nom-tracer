@@ -22,6 +22,7 @@ trace-context = []
 trace-color = ["trace"]
 trace-print = ["trace"]
 trace-max-level = ["trace"]
+trace-silencing = ["trace"]
 
 [package.metadata.docs.rs]
 all-features = true

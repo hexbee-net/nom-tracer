@@ -9,17 +9,13 @@ use {
     std::fmt::{Debug, Display, Formatter},
 };
 
-/// The main structure holding trace events.
-///
-/// A [Trace] maintains a list of events, a current nesting level, and an active state.
-/// The nesting level represents the depth of the current parsing operation in the overall
-/// structure of the parser combinators.
 pub struct Trace {
     pub events: Vec<TraceEvent>,
     pub level: usize,
     pub active: bool,
     #[cfg(feature = "trace-print")]
     pub print: bool,
+    #[cfg(feature = "trace-max-level")]
     pub panic_on_level: Option<usize>,
 }
 
@@ -31,28 +27,26 @@ impl Default for Trace {
             active: true,
             #[cfg(feature = "trace-print")]
             print: false,
+            #[cfg(feature = "trace-max-level")]
             panic_on_level: None,
         }
     }
 }
 
 impl Trace {
-    /// Resets the trace, clearing all events and setting the level to 0.
-    pub fn reset(&mut self) {
+    pub fn clear(&mut self) {
         self.events.clear();
         self.level = 0;
     }
 
-    /// Opens a new trace event.
-    ///
-    /// This increases the nesting level and adds an 'open' event to the trace.
-    /// The hierarchical structure of parsing is represented by these nested open/close events.
     pub fn open<I: AsRef<str>>(
         &mut self,
         context: Option<&'static str>,
         input: I,
         location: &'static str,
-    ) {
+        #[cfg(feature = "trace-print")] silent: bool,
+        #[cfg(not(feature = "trace-print"))] _silent: bool,
+    ) -> usize {
         if self.active {
             #[cfg(feature = "trace-max-level")]
             if let Some(level) = self.panic_on_level {
@@ -63,35 +57,32 @@ impl Trace {
 
             let event = TraceEvent {
                 level: self.level,
+                location,
                 context,
                 input: String::from(input.as_ref()),
-                location,
                 event: TraceEventType::Open,
             };
 
             #[cfg(feature = "trace-print")]
-            if self.print {
+            if self.print && !silent {
                 print(format!("{}", event));
             }
 
             self.events.push(event);
             self.level += 1;
         }
+
+        self.level
     }
 
-    /// Closes the current trace event.
-    ///
-    /// This decreases the nesting level and adds a 'close' event to the trace,
-    /// including the result of the parsing operation. The type of 'close' event
-    /// ([Ok](TraceEventType::CloseOk), [Error](TraceEventType::CloseError),
-    /// [Failure](TraceEventType::CloseFailure), [Incomplete](TraceEventType::CloseIncomplete)
-    /// corresponds to the result of the parse operation.
     pub fn close<I: AsRef<str>, O: Debug, E: Debug>(
         &mut self,
         context: Option<&'static str>,
         input: I,
         location: &'static str,
         result: &IResult<I, O, E>,
+        #[cfg(feature = "trace-print")] silent: bool,
+        #[cfg(not(feature = "trace-print"))] _silent: bool,
     ) {
         if self.active {
             self.level -= 1;
@@ -105,19 +96,23 @@ impl Trace {
 
             let event = TraceEvent {
                 level: self.level,
+                location,
                 context,
                 input: String::from(input.as_ref()),
-                location,
                 event: event_type,
             };
 
             #[cfg(feature = "trace-print")]
-            if self.print {
+            if self.print && !silent {
                 print(format!("{}", event));
             }
 
             self.events.push(event);
         }
+    }
+
+    pub fn set_level(&mut self, level: usize) {
+        self.level = level;
     }
 }
 
@@ -127,5 +122,101 @@ impl Display for Trace {
             event.fmt(f)?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_trace_default() {
+        let trace = Trace::default();
+        assert!(trace.events.is_empty());
+        assert_eq!(trace.level, 0);
+        assert!(trace.active);
+
+        #[cfg(feature = "trace-print")]
+        assert!(!trace.print);
+
+        #[cfg(feature = "trace-max-level")]
+        assert_eq!(trace.panic_on_level, None);
+    }
+
+    #[test]
+    fn test_trace_clear() {
+        let mut trace = Trace::default();
+        trace.events.push(TraceEvent {
+            level: 0,
+            location: "test",
+            context: None,
+            input: "input".to_string(),
+            event: TraceEventType::Open,
+        });
+        trace.level = 1;
+
+        trace.clear();
+        assert!(trace.events.is_empty());
+        assert_eq!(trace.level, 0);
+    }
+
+    #[test]
+    fn test_trace_open() {
+        let mut trace = Trace::default();
+        let level = trace.open(Some("context"), "input", "location", false);
+        assert_eq!(level, 1);
+        assert_eq!(trace.events.len(), 1);
+        assert!(matches!(trace.events[0].event, TraceEventType::Open));
+    }
+
+    #[test]
+    fn test_trace_close_ok() {
+        let mut trace = Trace::default();
+        trace.open(None, "input", "location", false);
+        trace.close::<_, _, nom::error::VerboseError<&str>>(
+            None,
+            "input",
+            "location",
+            &Ok(("", "result")),
+            false,
+        );
+        assert_eq!(trace.events.len(), 2);
+        assert!(matches!(trace.events[1].event, TraceEventType::CloseOk(_)));
+    }
+
+    #[test]
+    fn test_trace_set_level() {
+        let mut trace = Trace::default();
+        trace.set_level(5);
+        assert_eq!(trace.level, 5);
+    }
+
+    #[cfg(feature = "trace-max-level")]
+    mod max_level_tests {
+        use super::*;
+
+        #[test]
+        #[should_panic(expected = "Max level reached: 2")]
+        fn test_trace_max_level_panic() {
+            let mut trace = Trace {
+                panic_on_level: Some(2),
+                ..Default::default()
+            };
+            trace.open(None, "input", "location", false);
+            trace.open(None, "input", "location", false);
+            trace.open(None, "input", "location", false); // This should panic
+        }
+
+        #[test]
+        fn test_trace_max_level_no_panic() {
+            let mut trace = Trace {
+                panic_on_level: Some(3),
+                ..Default::default()
+            };
+            trace.open(None, "input", "location", false);
+            trace.open(None, "input", "location", false);
+            trace.open(None, "input", "location", false);
+            assert_eq!(trace.level, 3);
+        }
     }
 }
