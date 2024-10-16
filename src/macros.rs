@@ -101,6 +101,7 @@ macro_rules! __fn_name {
 /// - When using a custom tag, it should be provided as an identifier, not a string literal.
 /// - The context, if provided, can be any expression that evaluates to a `&str`.
 /// - This macro internally uses `tr_tag_ctx` for all tracing operations.
+#[cfg(feature = "trace")]
 #[macro_export]
 macro_rules! trace {
     ($parser:expr $(,)?) => {{
@@ -122,6 +123,14 @@ macro_rules! trace {
         let caller = $crate::__fn_name!();
         $crate::tr_tag_ctx(stringify!($tag), Some($context), caller, $parser)
     }};
+}
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! trace {
+    ($parser:expr $(,)?) => {{ $parser }};
+    ($tag:ident, $parser:expr $(,)?) => {{ $parser }};
+    ($context:expr, $parser:expr $(,)?) => {{ $parser }};
+    ($tag:ident, $context:expr, $parser:expr $(,)?) => {{ $parser }};
 }
 
 /// Activates tracing for either the default tag or a specified tag.
@@ -147,6 +156,7 @@ macro_rules! trace {
 /// activate_trace!(my_custom_tag);
 /// // Tracing is now active for parsers using the "my_custom_tag" tag
 /// ```
+#[cfg(feature = "trace")]
 #[macro_export]
 macro_rules! activate_trace (
     () => {
@@ -159,6 +169,12 @@ macro_rules! activate_trace (
             trace.borrow_mut().activate(stringify!($tag));
         });
     };
+);
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! activate_trace (
+    () => {};
+    ($tag:ident) => {};
 );
 
 /// Deactivates tracing for either the default tag or a specified tag.
@@ -185,6 +201,7 @@ macro_rules! activate_trace (
 /// deactivate_trace!(my_custom_tag);
 /// // Tracing is now inactive for parsers using the "my_custom_tag" tag
 /// ```
+#[cfg(feature = "trace")]
 #[macro_export]
 macro_rules! deactivate_trace (
     () => {
@@ -198,6 +215,12 @@ macro_rules! deactivate_trace (
             trace.borrow_mut().deactivate(stringify!($tag));
         });
     };
+);
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! deactivate_trace (
+    () => {};
+    ($tag:ident) => {};
 );
 
 /// Resets the trace for either the default tag or a specified tag.
@@ -224,6 +247,7 @@ macro_rules! deactivate_trace (
 /// reset_trace!(my_custom_tag);
 /// // All trace events for the "my_custom_tag" tag are now cleared
 /// ```
+#[cfg(feature = "trace")]
 #[macro_export]
 macro_rules! reset_trace (
     () => {
@@ -237,6 +261,12 @@ macro_rules! reset_trace (
             trace.borrow_mut().reset(stringify!($tag));
         });
     };
+);
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! reset_trace (
+    () => {};
+    ($tag:ident) => {};
 );
 
 /// Sets the maximum nesting level for tracing before panic.
@@ -278,6 +308,7 @@ macro_rules! reset_trace (
 /// max_level!(None);
 /// // Removes the nesting level limit for the default tag
 /// ```
+#[cfg(feature = "trace")]
 #[macro_export]
 macro_rules! max_level (
     ($level:expr) => {
@@ -290,6 +321,12 @@ macro_rules! max_level (
             trace.borrow_mut().panic_on_level(stringify!($tag, $level));
         });
     };
+);
+#[cfg(not(feature = "trace"))]
+#[macro_export]
+macro_rules! max_level (
+    ($level:expr) => {};
+    ($tag:ident, $level:expr) => {};
 );
 
 /// Retrieves the trace for either the default tag or a specified tag.
