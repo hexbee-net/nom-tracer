@@ -18,11 +18,11 @@ pub(crate) mod ansi;
 #[cfg(feature = "trace")]
 pub mod events;
 #[cfg(feature = "trace")]
-pub mod macros;
-#[cfg(feature = "trace")]
 pub mod tags;
 #[cfg(feature = "trace")]
 pub mod traces;
+
+pub mod macros;
 
 /// The default tag used when no specific tag is provided.
 pub const DEFAULT_TAG: &str = "default";
