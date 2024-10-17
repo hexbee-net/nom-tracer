@@ -9,12 +9,21 @@ use {
     std::fmt::{Debug, Display, Formatter},
 };
 
+/// Represents a single trace in the parsing process.
+///
+/// A `Trace` keeps track of parsing events, maintains the current nesting level,
+/// and can be configured for various tracing behaviors.
 pub struct Trace {
+    /// The collection of trace events.
     pub events: Vec<TraceEvent>,
+    /// The current nesting level of the trace.
     pub level: usize,
+    /// Whether the trace is currently active and recording events.
     pub active: bool,
+    /// Whether to print trace events in real-time.
     #[cfg(feature = "trace-print")]
     pub print: bool,
+    /// The maximum nesting level before panicking, if set.
     #[cfg(feature = "trace-max-level")]
     pub panic_on_level: Option<usize>,
 }
@@ -34,11 +43,24 @@ impl Default for Trace {
 }
 
 impl Trace {
+    /// Clears all recorded events and resets the nesting level to 0.
     pub fn clear(&mut self) {
         self.events.clear();
         self.level = 0;
     }
 
+    /// Records the opening of a parser in the trace.
+    ///
+    /// # Arguments
+    ///
+    /// * `context` - Optional context information for the event.
+    /// * `input` - The input being parsed.
+    /// * `location` - The location (usually function name) where this event occurred.
+    /// * `silent` - Whether to suppress real-time printing of this event.
+    ///
+    /// # Returns
+    ///
+    /// The new nesting level after recording this event.
     pub fn open<I: AsRef<str>>(
         &mut self,
         context: Option<&'static str>,
@@ -75,6 +97,19 @@ impl Trace {
         self.level
     }
 
+    /// Records the closing of a parser in the trace.
+    ///
+    /// # Arguments
+    ///
+    /// * `context` - Optional context information for the event.
+    /// * `input` - The input being parsed.
+    /// * `location` - The location (usually function name) where this event occurred.
+    /// * `result` - The result of the parsing operation.
+    /// * `silent` - Whether to suppress real-time printing of this event.
+    ///
+    /// # Returns
+    ///
+    /// The new nesting level after recording this event.
     pub fn close<I: AsRef<str>, O: Debug, E: Debug>(
         &mut self,
         context: Option<&'static str>,
@@ -83,7 +118,7 @@ impl Trace {
         result: &IResult<I, O, E>,
         #[cfg(feature = "trace-print")] silent: bool,
         #[cfg(not(feature = "trace-print"))] _silent: bool,
-    ) {
+    ) -> usize {
         if self.active {
             self.level -= 1;
 
@@ -109,14 +144,24 @@ impl Trace {
 
             self.events.push(event);
         }
+
+        self.level
     }
 
+    /// Sets the current nesting level of the trace.
+    ///
+    /// # Arguments
+    ///
+    /// * `level` - The new nesting level to set.
     pub fn set_level(&mut self, level: usize) {
         self.level = level;
     }
 }
 
 impl Display for Trace {
+    /// Formats the entire trace for display.
+    ///
+    /// This will format and display all events in the trace sequentially.
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for event in self.events.iter() {
             event.fmt(f)?;

@@ -24,7 +24,6 @@ pub mod traces;
 
 pub mod macros;
 
-/// The default tag used when no specific tag is provided.
 pub const DEFAULT_TAG: &str = "default";
 
 thread_local! {
@@ -43,9 +42,11 @@ thread_local! {
     #[cfg(feature = "trace")]
     pub static TRACE_TAGS: std::cell::RefCell<TraceTags> = std::cell::RefCell::new(TraceTags::new());
 
+    /// Thread-local storage for silent tracing (used with trace-silencing feature)
     #[cfg(feature = "trace-silencing")]
     pub static TRACE_SILENT: std::cell::RefCell<Trace> = std::cell::RefCell::new(Trace::default());
 
+    /// Thread-local storage for tree silence levels (used with trace-silencing feature)
     #[cfg(feature = "trace-silencing")]
     pub static TREE_SILENCE_LEVELS: std::cell::RefCell<Vec<usize>> = const { std::cell::RefCell::new(vec![]) };
 }
@@ -60,10 +61,23 @@ pub trait TraceError<I>: Debug {}
 #[cfg(not(feature = "trace-context"))]
 impl<I, E> TraceError<I> for E where E: Debug {}
 
+/// Main tracing function that wraps a parser with tracing functionality.
+///
+/// This function is the core of nom-tracer. It wraps a parser and adds tracing capabilities,
+/// recording the parser's execution path and results.
+///
+/// # Arguments
+///
+/// * `tag` - A static string used to categorize the trace events.
+/// * `context` - An optional static string providing additional context for the trace.
+/// * `name` - A static string identifying the parser being traced.
+/// * `parser` - The parser function to be wrapped with tracing.
 pub fn tr<I, O, E, F>(
-    tag: &'static str,
+    #[cfg(feature = "trace")] tag: &'static str,
+    #[cfg(not(feature = "trace"))] _tag: &'static str,
     context: Option<&'static str>,
-    name: &'static str,
+    #[cfg(feature = "trace")] name: &'static str,
+    #[cfg(not(feature = "trace"))] _name: &'static str,
     mut parser: F,
 ) -> impl FnMut(I) -> IResult<I, O, E>
 where
@@ -147,6 +161,17 @@ where
     }
 }
 
+/// Function to silence tracing for a subtree of parsers.
+///
+/// This is used to reduce noise in the trace output for well-tested or less interesting
+/// parts of the parser.
+///
+/// # Arguments
+///
+/// * `tag` - A static string used to categorize the trace events.
+/// * `context` - An optional static string providing additional context for the trace.
+/// * `name` - A static string identifying the parser being silenced.
+/// * `parser` - The parser function to be silenced.
 #[cfg(feature = "trace-silencing")]
 pub fn silence_tree<I, O, E, F>(
     tag: &'static str,
@@ -195,6 +220,10 @@ where
     }
 }
 
+/// Helper function to add context to error results.
+///
+/// This is used when the trace-context feature is enabled to provide more
+/// detailed error information.
 #[cfg(feature = "trace-context")]
 fn add_context_to_err<I, O, E>(
     name: &'static str,
@@ -215,6 +244,16 @@ where
     }
 }
 
+// TODO: Return `Option<String>` instead.
+/// Retrieves the trace for a specific tag.
+///
+/// # Arguments
+///
+/// * `tag` - A static string identifying the tag for which to retrieve the trace.
+///
+/// # Returns
+///
+/// Returns a string representation of the trace, or a message if no trace is found.
 pub fn get_trace_for_tag(
     #[cfg(feature = "trace")] tag: &'static str,
     #[cfg(not(feature = "trace"))] _tag: &'static str,
@@ -234,10 +273,21 @@ pub fn get_trace_for_tag(
     String::new()
 }
 
+/// Prints the trace for a specific tag.
+///
+/// # Arguments
+///
+/// * `tag` - A static string identifying the tag for which to print the trace.
 pub fn print_trace_for_tag(tag: &'static str) {
     print(get_trace_for_tag(tag));
 }
 
+// TODO: Remove and use `std` instead.
+/// Helper function to print a string.
+///
+/// # Arguments
+///
+/// * `s` - The string to be printed.
 pub(crate) fn print<I: AsRef<str>>(s: I) {
     use std::io::Write;
     let stdout = std::io::stdout();

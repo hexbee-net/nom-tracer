@@ -7,12 +7,20 @@ use {
     std::{collections::HashMap, fmt::Debug},
 };
 
+/// Manages multiple traces, each associated with a unique tag.
+///
+/// This struct allows for organizing and managing multiple trace instances,
+/// each identified by a static string tag. It provides methods for manipulating
+/// traces, such as activating, deactivating, and resetting them.
 #[derive(Default)]
 pub struct TraceTags {
     pub traces: HashMap<&'static str, Trace>,
 }
 
 impl TraceTags {
+    /// Creates a new `TraceTags` instance with a default trace.
+    ///
+    /// The default trace is associated with the [DEFAULT_TAG].
     pub fn new() -> Self {
         let mut traces = HashMap::new();
         traces.insert(DEFAULT_TAG, Trace::default());
@@ -20,43 +28,66 @@ impl TraceTags {
         TraceTags { traces }
     }
 
-    pub fn reset(&mut self, tag: &'static str) {
+    /// Resets the trace associated with the given tag.
+    ///
+    /// If the tag doesn't exist, a new trace is created and then reset.
+    pub fn clear(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.clear();
     }
 
+    /// Retrieves the trace associated with the given tag as a string.
+    ///
+    /// Returns `None` if the tag doesn't exist.
     pub fn get_trace(&self, tag: &'static str) -> Option<String> {
         self.traces.get(tag).map(|t| t.to_string())
     }
 
+    /// Activates the trace associated with the given tag.
+    ///
+    /// If the tag doesn't exist, a new trace is created and activated.
     pub fn activate(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.active = true;
     }
 
+    /// Deactivates the trace associated with the given tag.
+    ///
+    /// If the tag doesn't exist, a new trace is created (but remains inactive).
     pub fn deactivate(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.active = false;
     }
 
+    /// Activates real-time printing for the trace associated with the given tag.
+    ///
+    /// This method is only available when the `trace-print` feature is enabled.
     #[cfg(feature = "trace-print")]
     pub fn activate_trace_print(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.print = true;
     }
 
+    /// Deactivates real-time printing for the trace associated with the given tag.
+    ///
+    /// This method is only available when the `trace-print` feature is enabled.
     #[cfg(feature = "trace-print")]
     pub fn deactivate_trace_print(&mut self, tag: &'static str) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.print = false;
     }
 
+    /// Sets the maximum nesting level for the trace associated with the given tag.
+    ///
+    /// When the nesting level exceeds this value, the parser will panic.
+    /// This method is only available when the `trace-max-level` feature is enabled.
     #[cfg(feature = "trace-max-level")]
     pub fn panic_on_level(&mut self, tag: &'static str, level: Option<usize>) {
         let t = self.traces.entry(tag).or_insert(Trace::default());
         t.panic_on_level = level;
     }
 
+    /// Records the opening of a parser in the trace associated with the given tag.
     pub fn open<I>(
         &mut self,
         tag: &'static str,
@@ -71,6 +102,7 @@ impl TraceTags {
         t.open(context, input, location, silent);
     }
 
+    /// Records the closing of a parser in the trace associated with the given tag.
     pub fn close<I, O: Debug, E: Debug>(
         &mut self,
         tag: &'static str,
@@ -86,6 +118,9 @@ impl TraceTags {
         t.close(context, input, location, result, silent);
     }
 
+    /// Returns the current nesting level for the trace associated with the given tag.
+    ///
+    /// If the tag doesn't exist, returns 0.
     pub fn level_for_tag(&self, tag: &'static str) -> usize {
         self.traces.get(tag).map(|t| t.level).unwrap_or(0)
     }
@@ -105,7 +140,7 @@ mod tests {
     fn test_reset() {
         let mut trace_tags = TraceTags::new();
         trace_tags.open(DEFAULT_TAG, None, "input", "location", false);
-        trace_tags.reset(DEFAULT_TAG);
+        trace_tags.clear(DEFAULT_TAG);
         assert_eq!(trace_tags.traces[DEFAULT_TAG].events.len(), 0);
         assert_eq!(trace_tags.traces[DEFAULT_TAG].level, 0);
     }

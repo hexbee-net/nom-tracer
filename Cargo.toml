@@ -15,8 +15,7 @@ publish = true
 nom = "7.1.3"
 
 [features]
-default = ["trace"]
-all = ["trace", "trace-color", "trace-print", "trace-context", "trace-max-level"]
+default = ["trace", "trace-context", "trace-color", "trace-print", "trace-max-level", "trace-silencing"]
 trace = []
 trace-context = []
 trace-color = ["trace"]
@@ -30,3 +29,34 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.clippy]
 unwrap_or_default = "allow"
+
+[[example]]
+name = "simple_parser"
+path = "examples/simple_parser.rs"
+
+[[example]]
+name = "activate_deactivate_trace"
+path = "examples/activate_deactivate_trace.rs"
+
+
+[[example]]
+name = "custom_tags"
+path = "examples/custom_tags.rs"
+
+[[example]]
+name = "nested_parsers"
+path = "examples/nested_parsers.rs"
+
+[[example]]
+name = "error_handling"
+path = "examples/error_handling.rs"
+
+[[example]]
+name = "silence_tree"
+path = "examples/silence_tree.rs"
+required-features = ["trace-silencing"]
+
+[[example]]
+name = "max_level_trace"
+path = "examples/max_level_trace.rs"
+required-features = ["trace-max-level"]

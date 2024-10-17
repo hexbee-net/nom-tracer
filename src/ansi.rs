@@ -1,3 +1,13 @@
+//! ANSI escape code constants for terminal text formatting.
+//!
+//! This module provides a set of constants for ANSI escape codes that can be used
+//! to format text output in terminal environments. It includes codes for:
+//!
+//! - Foreground (text) colors (both normal and bright variants)
+//! - Background colors (both normal and bright variants)
+//! - Text styles (bold, italic, underline, etc.)
+//! - Reset codes to return to default formatting
+
 pub const FG_BLACK: &str = concat!("\x1b[", "30", "m");
 pub const FG_RED: &str = concat!("\x1b[", "31", "m");
 pub const FG_GREEN: &str = concat!("\x1b[", "32", "m");

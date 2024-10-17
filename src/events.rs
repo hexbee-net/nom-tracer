@@ -5,25 +5,49 @@
 use crate::ansi;
 use std::fmt::{Display, Formatter};
 
+/// Represents the type of a trace event.
+///
+/// This enum is used to categorize different stages or outcomes of a parsing operation.
 #[derive(Clone, Debug)]
 pub enum TraceEventType {
+    /// Indicates the start of a parsing operation.
     Open,
+    /// Indicates a successful parsing operation, containing the result.
     CloseOk(String),
+    /// Indicates a parsing error, containing the error message.
     CloseError(String),
+    /// Indicates a parsing failure, containing the failure message.
     CloseFailure(String),
+    /// Indicates an incomplete parse, containing the additional data needed.
     CloseIncomplete(nom::Needed),
 }
 
+/// Represents a single trace event in the parsing process.
+///
+/// This struct contains all the information about a specific event that occurred
+/// during parsing, including its type, location, and context.
 #[derive(Clone)]
 pub struct TraceEvent {
+    /// The nesting level of this event in the parsing tree.
     pub level: usize,
+    /// The location (usually function name) where this event occurred.
     pub location: &'static str,
+    /// Optional context information for this event.
     pub context: Option<&'static str>,
+    /// The input string being parsed at this point.
     pub input: String,
+    /// The type of this trace event.
     pub event: TraceEventType,
 }
 
 impl Display for TraceEvent {
+    /// Formats the TraceEvent for display.
+    ///
+    /// This implementation provides a detailed, possibly colored representation of the trace event,
+    /// including indentation to represent nesting level, and different formatting for different
+    /// event types.
+    ///
+    /// The exact format depends on whether the `trace-color` feature is enabled.
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let indent = "| ".repeat(self.level);
 
