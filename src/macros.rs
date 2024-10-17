@@ -328,10 +328,10 @@ macro_rules! set_max_level (
 #[macro_export]
 macro_rules! get_trace {
     () => {
-        $crate::get_trace_for_tag($crate::DEFAULT_TAG);
+        $crate::get_trace_for_tag($crate::DEFAULT_TAG)
     };
     ($tag:ident) => {
-        $crate::get_trace_for_tag(stringify!($tag));
+        $crate::get_trace_for_tag(stringify!($tag))
     };
 }
 
