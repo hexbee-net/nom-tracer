@@ -35,8 +35,6 @@ It allows you to easily trace the execution of your parsers, providing invaluabl
 - 🤫 Silence subtrees to reduce noise in well-tested parts of your parser
 - 🔧 Configurable via Cargo features
 
-![image](https://github.com/user-attachments/assets/b420d0fb-ae84-4351-ba93-4d21f046f55a)
-
 ## Performance
 
 One of the key advantages of `nom-tracer` is its minimal performance impact:
@@ -82,7 +80,7 @@ For production builds, you can disable all tracing features to ensure zero overh
 nom-tracer = { version = "0.2", default-features = false }
 ```
 
-For more detailed examples showcasing various features of `nom-tracer`, check out the [`examples`](https://github.com/hexbee-net/nom-tracer/tree/main/src) folder in the root of the repository.
+For more detailed examples showcasing various features of `nom-tracer`, check out the [`examples`](https://github.com/hexbee-net/nom-tracer/tree/main/examples) folder in the root of the repository.
 These examples demonstrate real-world usage scenarios and can help you get started with more advanced tracing techniques.
 
 ## Macros
