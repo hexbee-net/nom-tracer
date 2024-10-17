@@ -4,7 +4,26 @@
 [![Documentation](https://docs.rs/nom-tracer/badge.svg)](https://docs.rs/nom-tracer)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-`nom-tracer` is a powerful and flexible tracing utility for the [nom](https://github.com/Geal/nom) parser combinator library. It allows you to easily trace the execution of your parsers, providing invaluable insights for debugging and optimization.
+`nom-tracer` is a powerful and flexible tracing utility for the [nom](https://github.com/Geal/nom) parser combinator library.
+It allows you to easily trace the execution of your parsers, providing invaluable insights for debugging and optimization.
+
+## Contents
+
+- [Features](#features)
+- [Performance](#performance)
+- [Quick Start](#quick-start)
+- [Macros](#macros)
+   - [trace!](#trace)
+   - [silence_tree!](#silence_tree)
+   - [activate_trace! and deactivate_trace!](#activate_trace-and-deactivate_trace)
+   - [reset_trace!](#reset_trace)
+   - [get_trace!](#get_trace)
+   - [print_trace!](#print_trace)
+   - [set_max_level!](#set_max_level)
+- [Cargo Features](#cargo-features)
+- [Context Information](#context-information)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
@@ -13,6 +32,7 @@
 - 🎨 Colorized output for easy reading (optional)
 - 🏷️ Support for multiple trace tags to organize parser traces
 - 📊 Hierarchical view of parser execution
+- 🤫 Silence subtrees to reduce noise in well-tested parts of your parser
 - 🔧 Configurable via Cargo features
 
 ![image](https://github.com/user-attachments/assets/b420d0fb-ae84-4351-ba93-4d21f046f55a)
@@ -30,73 +50,10 @@ Add `nom-tracer` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nom-tracer = "0.1"
+nom-tracer = "0.2"
 ```
 
-Then, wrap your parsers with the `tr` function or use the `trace!` macro:
-
-```rust
-use nom_tracer::{tr, trace};
-use nom::bytes::complete::tag;
-
-fn parse_hello(input: &str) -> IResult<&str, &str> {
-    tr("parse_hello", tag("hello"))(input)
-}
-
-// Or using the trace! macro
-fn parse_world(input: &str) -> IResult<&str, &str> {
-    trace!(tag("world"))(input)
-}
-
-let result = parse_hello("hello world");
-println!("Parse result: {:?}", result);
-println!("Trace:\n{}", nom_tracer::get_trace());
-```
-
-For production builds, you can disable all tracing features to ensure zero overhead:
-
-```toml
-[dependencies]
-nom-tracer = { version = "0.1.0", default-features = false }
-```
-
-## Macros
-
-`nom-tracer` provides several macros to make tracing easier and more flexible:
-
-### `trace!`
-
-The `trace!` macro is the primary and most flexible way to add tracing to your nom parsers. It's designed to be easy to use while providing powerful functionality.
-
-#### Functionality
-
-The `trace!` macro wraps your parser with tracing functionality. It automatically captures the function name where it's used and allows you to optionally specify a custom tag and context. Under the hood, it uses the `tr_tag_ctx` function, providing a more convenient interface.
-
-#### Usage Patterns
-
-The `trace!` macro supports four main usage patterns:
-
-1. `trace!(parser)`
-    - Uses the default tag and no context.
-    - Automatically captures the function name as the parser name.
-
-2. `trace!(tag, parser)`
-    - Uses a custom tag and no context.
-    - Automatically captures the function name as the parser name.
-
-3. `trace!("context", parser)`
-    - Uses the default tag and a custom context.
-    - Automatically captures the function name as the parser name.
-
-4. `trace!(tag, "context", parser)`
-    - Uses a custom tag and a custom context.
-    - Automatically captures the function name as the parser name.
-
-#### Examples
-
-Let's look at some examples to illustrate how to use the `trace!` macro in different scenarios:
-
-1. Basic usage:
+Then, use the `trace!` macro to wrap your parsers:
 
 ```rust
 use nom_tracer::trace;
@@ -106,33 +63,45 @@ use nom::IResult;
 fn parse_hello(input: &str) -> IResult<&str, &str> {
     trace!(tag("hello"))(input)
 }
-```
 
-2. Using a custom tag:
+fn parse_world(input: &str) -> IResult<&str, &str> {
+    trace!(tag("world"))(input)
+}
 
-```rust
-use nom_tracer::trace;
-use nom::character::complete::alpha1;
-use nom::IResult;
-
-fn parse_name(input: &str) -> IResult<&str, &str> {
-    trace!(names, alpha1)(input)
+fn main() {
+    let result = parse_hello("hello world");
+    println!("Parse result: {:?}", result);
+    println!("Trace:\n{}", nom_tracer::get_trace!());
 }
 ```
 
-3. Adding context:
+For production builds, you can disable all tracing features to ensure zero overhead:
 
-```rust
-use nom_tracer::trace;
-use nom::character::complete::digit1;
-use nom::IResult;
-
-fn parse_age(input: &str) -> IResult<&str, &str> {
-    trace!("Parsing user age", digit1)(input)
-}
+```toml
+[dependencies]
+nom-tracer = { version = "0.2", default-features = false }
 ```
 
-4. Using both a custom tag and context:
+For more detailed examples showcasing various features of `nom-tracer`, check out the [`examples`](https://github.com/hexbee-net/nom-tracer/tree/main/src) folder in the root of the repository.
+These examples demonstrate real-world usage scenarios and can help you get started with more advanced tracing techniques.
+
+## Macros
+
+`nom-tracer` provides several macros to make tracing easier and more flexible. Here's a detailed explanation of each macro:
+
+### trace!
+
+The `trace!` macro is the primary way to add tracing to your nom parsers.
+It wraps a parser with tracing functionality, recording its execution path and results.
+
+You can use `trace!` in several ways:
+
+1. `trace!(parser)`: Uses the default tag and no context.
+2. `trace!(tag, parser)`: Uses a custom tag and no context.
+3. `trace!("context", parser)`: Uses the default tag and a custom context.
+4. `trace!(tag, "context", parser)`: Uses a custom tag and a custom context.
+
+Here's an example that demonstrates these different usage patterns:
 
 ```rust
 use nom_tracer::trace;
@@ -144,25 +113,6 @@ fn parse_person(input: &str) -> IResult<&str, (&str, char, &str)> {
     trace!(
         person_parser,
         "Parsing person: name,separator,age",
-        tuple((alpha1, char(','), digit1))
-    )(input)
-}
-```
-
-#### Nested Parsers
-
-The `trace!` macro can be particularly useful when working with nested parsers:
-
-```rust
-use nom_tracer::trace;
-use nom::sequence::tuple;
-use nom::character::complete::{alpha1, char, digit1};
-use nom::IResult;
-
-fn parse_person(input: &str) -> IResult<&str, (&str, char, &str)> {
-    trace!(
-        person_parser,
-        "Parsing person",
         tuple((
             trace!(name_parser, "Parsing name", alpha1),
             trace!(char(',')),
@@ -172,50 +122,68 @@ fn parse_person(input: &str) -> IResult<&str, (&str, char, &str)> {
 }
 ```
 
-#### Benefits of Using the `trace!` Macro
+The `trace!` macro is designed to be flexible and easy to use in various scenarios.
+It automatically captures the function name where it's used, reducing boilerplate code.
+When compiling with the `trace` feature disabled, all `trace!` macros effectively disappear, leaving no runtime overhead.
 
-1. **Automatic Function Name Capture**: You don't need to manually specify the parser name, reducing boilerplate code.
-2. **Flexibility**: Easy to add tags and context as needed, without changing the function signature.
-3. **Readability**: The macro syntax is concise and clearly indicates where tracing is applied.
-4. **Easy to Enable/Disable**: When you compile with the `trace` feature disabled, all `trace!` macros effectively disappear, leaving no runtime overhead.
+### silence_tree!
 
-### `activate_trace!`
+The `silence_tree!` macro allows you to silence tracing for a subtree of parsers.
+This is useful for reducing noise in well-tested or less interesting parts of your parser.
 
-Activates tracing for either the default tag or a specified tag.
+You can use `silence_tree!` in several ways:
 
-Usage:
+1. `silence_tree!(parser)`: Silences the default tag.
+2. `silence_tree!(tag, parser)`: Silences a specific tag.
+3. `silence_tree!("context", parser)`: Silences the default tag with a context.
+4. `silence_tree!(tag, "context", parser)`: Silences a specific tag with a context.
+
+Here's an example:
 
 ```rust
-use nom_tracer::activate_trace;
+use nom_tracer::{trace, silence_tree};
+use nom::sequence::tuple;
+use nom::character::complete::{alpha1, char, digit1};
+use nom::IResult;
 
-// Activate tracing for the default tag
-activate_trace!();
-
-// Activate tracing for a custom tag
-activate_trace!(my_custom_tag);
+fn parse_person(input: &str) -> IResult<&str, (&str, char, &str)> {
+    trace!(
+        person_parser,
+        "Parsing person",
+        tuple((
+            trace!(alpha1),
+            trace!(char(',')),
+            silence_tree!("Silenced age parsing", digit1)
+        ))
+    )(input)
+}
 ```
 
-### `deactivate_trace!`
+Use `silence_tree!` for parts of your parser that are well-tested or when you want to focus on specific areas of your parser.
+Silenced subtrees still execute normally but don't generate trace output. The `silence_tree!` macro is only available when the `trace-silencing` feature is enabled.
 
-Deactivates tracing for either the default tag or a specified tag.
+### activate_trace! and deactivate_trace!
 
-Usage:
+These macros allow you to dynamically activate or deactivate tracing for either the default tag or a specified tag.
 
 ```rust
-use nom_tracer::deactivate_trace;
+use nom_tracer::{activate_trace, deactivate_trace};
 
-// Deactivate tracing for the default tag
+// Activate/deactivate tracing for the default tag
+activate_trace!();
 deactivate_trace!();
 
-// Deactivate tracing for a custom tag
+// Activate/deactivate tracing for a custom tag
+activate_trace!(my_custom_tag);
 deactivate_trace!(my_custom_tag);
 ```
 
-### `reset_trace!`
+These macros are useful for selectively enabling or disabling tracing in different parts of your application.
+You can use them to control tracing at runtime based on conditions or user input.
 
-Resets the trace for either the default tag or a specified tag, clearing all recorded events.
+### reset_trace!
 
-Usage:
+This macro resets the trace for either the default tag or a specified tag, clearing all recorded events.
 
 ```rust
 use nom_tracer::reset_trace;
@@ -227,67 +195,74 @@ reset_trace!();
 reset_trace!(my_custom_tag);
 ```
 
-### `get_trace!`
+`reset_trace!` is handy when you want to clear previous trace data and start fresh. It can be particularly useful in long-running applications or test suites where you want to reset the trace between different parsing operations.
 
-The `get_trace!` macro provides a convenient way to retrieve traces for either the default tag or a specified tag.
+### get_trace!
+
+The `get_trace!` macro retrieves the trace for either the default tag or a specified tag.
 
 ```rust
 use nom_tracer::{trace, get_trace};
 use nom::bytes::complete::tag;
 
-let _ = trace!(tag("hello"))("hello world");
-let default_trace = get_trace!(); // Gets trace for default tag
+fn main() {
+    let _ = trace!(tag("hello"))("hello world");
+    let default_trace = get_trace!(); // Gets trace for default tag
 
-let _ = trace!(my_tag, tag("hello"))("hello world");
-let my_tag_trace = get_trace!(my_tag); // Gets trace for "my_tag"
+    let _ = trace!(my_tag, tag("hello"))("hello world");
+    let my_tag_trace = get_trace!(my_tag); // Gets trace for "my_tag"
 
-println!("Default trace:\n{}", default_trace);
-println!("My tag trace:\n{}", my_tag_trace);
+    println!("Default trace:\n{}", default_trace.unwrap_or_default());
+    println!("My tag trace:\n{}", my_tag_trace.unwrap_or_default());
+}
 ```
 
-### `print_trace!`
+`get_trace!` returns an `Option<String>`, so you may need to handle the case where no trace is available.
+It's useful for retrieving trace information for further processing or display.
 
-The `print_trace!` macro provides a convenient way to print traces for either the default tag or a specified tag.
+### print_trace!
+
+The `print_trace!` macro prints the trace for either the default tag or a specified tag directly to the console.
 
 ```rust
 use nom_tracer::{trace, print_trace};
 use nom::bytes::complete::tag;
 
-let _ = trace!(tag("hello"))("hello world");
-print_trace!(); // Prints trace for default tag
+fn main() {
+    let _ = trace!(tag("hello"))("hello world");
+    print_trace!(); // Prints trace for default tag
 
-let _ = trace!(my_tag, tag("hello"))("hello world");
-print_trace!(my_tag); // Prints trace for "my_tag"
+    let _ = trace!(my_tag, tag("hello"))("hello world");
+    print_trace!(my_tag); // Prints trace for "my_tag"
+}
 ```
 
-### `max_level!`
+This macro is convenient for quick debugging or when you want to immediately see the trace output. Keep in mind that it prints to stdout, so be mindful of where and when you use it, especially in production environments.
 
-The `max_level!` macro allows you to set a maximum nesting level for tracing, which can be useful for detecting infinite recursion or excessively deep parser nesting.
+### set_max_level!
 
-Usage:
+The `set_max_level!` macro allows you to set a maximum nesting level for tracing, which can be useful for detecting infinite recursion or excessively deep parser nesting.
 
 ```rust
-use nom_tracer::max_level;
+use nom_tracer::set_max_level;
 
 // Set maximum nesting level to 10 for the default tag
-max_level!(Some(10));
+set_max_level!(Some(10));
 
 // Set maximum nesting level to 5 for a custom tag
-max_level!(my_custom_tag, Some(5));
+set_max_level!(my_custom_tag, Some(5));
 
 // Remove the nesting level limit for the default tag
-max_level!(None);
+set_max_level!(None);
 
 // Remove the nesting level limit for a custom tag
-max_level!(my_custom_tag, None);
+set_max_level!(my_custom_tag, None);
 ```
 
-When the nesting level exceeds the specified maximum, the next `open` operation will cause a panic with a message indicating the maximum level was reached.
-
-#### Example
+Here's an example of how you might use `set_max_level!` to catch potential infinite recursion:
 
 ```rust
-use nom_tracer::{trace, max_level};
+use nom_tracer::{trace, set_max_level};
 use nom::sequence::tuple;
 use nom::character::complete::{alpha1, char};
 use nom::IResult;
@@ -304,220 +279,38 @@ fn recursive_parser(input: &str) -> IResult<&str, &str> {
 
 fn main() {
     // Set a maximum nesting level of 5
-    max_level!(Some(5));
+    set_max_level!(Some(5));
 
     // This will panic if the nesting level exceeds 5
     let _ = recursive_parser("a,b,c,d,e,f,g");
 }
 ```
 
-#### Considerations
+`set_max_level!` is primarily a debugging tool, useful during development to catch potential issues with recursive parsers or unexpected deep nesting. The appropriate maximum level depends on your parser's structure. Set it high enough to allow for valid deep nesting, but low enough to catch potential infinite recursion. You can set different limits for different tags, allowing for fine-grained control over various parts of your parser. This macro is only available when the `trace-max-level` feature is enabled.
 
-1. **Debugging Tool**: `max_level!` is primarily a debugging tool. It's useful during development to catch potential issues with recursive parsers or unexpected deep nesting.
+## Cargo Features
 
-2. **Choosing the Right Level**: The appropriate maximum level depends on your parser's structure. Set it high enough to allow for valid deep nesting, but low enough to catch potential infinite recursion.
+- `trace`: Enable tracing (default)
+- `trace-color`: Enable colorized output
+- `trace-print`: Print trace events in real-time (unbuffered)
+- `trace-context`: Add context information to error messages (can be used independently of `trace`)
+- `trace-silencing`: Enable the `silence_tree!` macro functionality
+- `trace-max-level`: Enable maximum nesting level functionality
 
-3. **Tag-Specific Limits**: You can set different limits for different tags, allowing for fine-grained control over various parts of your parser.
-
-## Core Tracing Functions
-
-While the `trace!` macro is convenient for most use cases, `nom-tracer` also provides direct function calls for more advanced scenarios. These functions offer finer control over the tracing process and can be useful in situations where you need to dynamically determine tracing parameters or integrate with existing code structures.
-
-### `tr`: Basic Tracing
-
-The `tr` function is the simplest way to add tracing to a parser. It uses the default tag and no context.
-
-```rust
-pub fn tr<I, O, E, F>(name: &'static str, parser: F) -> impl FnMut(I) -> IResult<I, O, E>
-```
-
-Example usage:
-
-```rust
-use nom_tracer::tr;
-use nom::bytes::complete::tag;
-use nom::IResult;
-
-fn parse_hello(input: &str) -> IResult<&str, &str> {
-    tr("parse_hello", tag("hello"))(input)
-}
-```
-
-### `tr_ctx`: Tracing with Context
-
-`tr_ctx` allows you to specify a context string along with the parser name.
-
-```rust
-pub fn tr_ctx<I, O, E, F>(
-    name: &'static str,
-    context: &'static str,
-    parser: F
-) -> impl FnMut(I) -> IResult<I, O, E>
-```
-
-Example usage:
-
-```rust
-use nom_tracer::tr_ctx;
-use nom::bytes::complete::tag;
-use nom::IResult;
-
-fn parse_greeting(input: &str) -> IResult<&str, &str> {
-    tr_ctx("parse_greeting", "Parsing a formal greeting", tag("Hello, "))(input)
-}
-```
-
-### `tr_tag`: Tracing with Custom Tags
-
-`tr_tag` allows you to specify a custom tag for organizing traces.
-
-```rust
-pub fn tr_tag<I, O, E, F>(
-    tag: &'static str,
-    name: &'static str,
-    parser: F
-) -> impl FnMut(I) -> IResult<I, O, E>
-```
-
-Example usage:
-
-```rust
-use nom_tracer::tr_tag;
-use nom::character::complete::digit1;
-use nom::IResult;
-
-fn parse_year(input: &str) -> IResult<&str, &str> {
-    tr_tag("date_parser", "parse_year", digit1)(input)
-}
-```
-
-### `tr_tag_ctx`: Tracing with Custom Tags and Context
-
-`tr_tag_ctx` is the most flexible function, allowing you to specify both a custom tag and a context.
-
-```rust
-pub fn tr_tag_ctx<I, O, E, F>(
-    tag: &'static str,
-    context: Option<&'static str>,
-    name: &'static str,
-    parser: F
-) -> impl FnMut(I) -> IResult<I, O, E>
-```
-
-Example usage:
-
-```rust
-use nom_tracer::tr_tag_ctx;
-use nom::sequence::tuple;
-use nom::character::complete::{alpha1, char, digit1};
-use nom::IResult;
-
-fn parse_person(input: &str) -> IResult<&str, (&str, char, &str)> {
-    tr_tag_ctx(
-        "person_parser",
-        Some("Parsing person: name,separator,age"),
-        "parse_person",
-        tuple((alpha1, char(','), digit1))
-    )(input)
-}
-```
-
-## Trace Retrieval functions
-
-`nom-tracer` provides several functions for retrieving and printing trace information:
-
-### Retrieving Traces
-
-#### `get_trace()`
-
-Retrieves the trace for the default tag.
-
-```rust
-use nom_tracer::{trace, get_trace};
-use nom::bytes::complete::tag;
-
-let _ = trace!(tag("hello"))("hello world");
-let trace = get_trace();
-println!("Default trace:\n{}", trace);
-```
-
-#### `get_trace_for_tag(tag: &'static str)`
-
-Retrieves the trace for a specific tag.
-
-```rust
-use nom_tracer::{trace, get_trace_for_tag};
-use nom::bytes::complete::tag;
-
-let _ = trace!(my_tag, tag("hello"))("hello world");
-let trace = get_trace_for_tag("my_tag");
-println!("My tag trace:\n{}", trace);
-```
-
-### Printing Traces
-
-#### `print_trace()`
-
-Prints the entire trace for the default tag to the console.
-
-```rust
-use nom_tracer::{trace, print_trace};
-use nom::bytes::complete::tag;
-
-let _ = trace!(tag("hello"))("hello world");
-print_trace();
-```
-
-#### `print_trace_for_tag(tag: &'static str)`
-
-Prints the trace for a specific tag to the console.
-
-```rust
-use nom_tracer::{trace, print_trace_for_tag};
-use nom::bytes::complete::tag;
-
-let _ = trace!(my_tag, tag("hello"))("hello world");
-print_trace_for_tag("my_tag");
-```
-
-## Using Multiple Tags
-
-You can use different tags to organize your traces into separate groups:
-
-```rust
-use nom_tracer::{tr_tag, get_trace_for_tag};
-
-fn parse_name(input: &str) -> IResult<&str, &str> {
-    tr_tag("names", "parse_name", nom::character::complete::alpha1)(input)
-}
-
-fn parse_age(input: &str) -> IResult<&str, u32> {
-    tr_tag("numbers", "parse_age", nom::character::complete::u32)(input)
-}
-
-// Later, you can retrieve traces for specific tags:
-let name_traces = get_trace_for_tag("names");
-let number_traces = get_trace_for_tag("numbers");
-```
-
-## Context Information
-
-Context information in `nom-tracer` provides additional details about each parser's purpose or role. This feature is especially useful for error reporting and debugging complex parsers. When the `trace-context` feature is enabled, this context is included in both the trace output and error messages.
-
-### Enabling the Feature
-
-To use context information, enable the `trace-context` feature in your `Cargo.toml`:
+To enable features, add them to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nom-tracer = { version = "0.1.0", features = ["trace-context"] }
+nom-tracer = { version = "0.2", features = ["trace-color", "trace-context", "trace-silencing"] }
 ```
 
-### Adding Context
+Note that the `trace-context` feature can be used independently of the `trace` feature. This allows you to add context to your `nom` errors without enabling full tracing functionality.
 
-You can add context using either the `trace!` macro or the `tr_ctx` and `tr_tag_ctx` functions:
+## Context Information
 
-Using the `trace!` macro:
+The `trace-context` feature enhances both trace output and error messages with additional context. This feature can be used in conjunction with the `trace` feature or independently.
+
+When used with `trace`, it eliminates the need for nom's `context` combinator, simplifying your parser code while still providing rich contextual information:
 
 ```rust
 use nom_tracer::trace;
@@ -529,190 +322,18 @@ fn parse_username(input: &str) -> IResult<&str, &str> {
 }
 ```
 
-Using the `tr_ctx` function:
+In this example, if the parser fails, the error message will include the context "Parsing username (alphabetic characters only)", without requiring the use of nom's `context` combinator.
 
-```rust
-use nom_tracer::tr_ctx;
-use nom::character::complete::alpha1;
-use nom::IResult;
-
-fn parse_username(input: &str) -> IResult<&str, &str> {
-    tr_ctx("parse_username", "Parsing username (alphabetic characters only)", alpha1)(input)
-}
-```
-
-### Example with Error Handling
-
-Here's an example that demonstrates how context information enhances error messages:
-
-```rust
-use nom_tracer::trace;
-use nom::character::complete::{alpha1, digit1};
-use nom::sequence::tuple;
-use nom::IResult;
-
-fn parse_user_id(input: &str) -> IResult<&str, (&str, &str)> {
-    trace!(
-        "Parsing user ID (format: <username>-<number>)",
-        tuple((
-            trace!("Parsing username part", alpha1),
-            trace!("Parsing separator", tag("-")),
-            trace!("Parsing numeric part", digit1)
-        ))
-    )(input)
-}
-
-fn main() {
-    let result = parse_user_id("john123");  // Missing hyphen
-    match result {
-        Ok((remainder, (username, id))) => {
-            println!("Parsed successfully. Username: {}, ID: {}", username, id);
-        }
-        Err(e) => {
-            println!("Parsing failed: {:?}", e);
-            // The error message will include the context "Parsing separator"
-        }
-    }
-}
-```
-
-In this example, if the input doesn't match the expected format, the error message will include the context of the parser that failed (in this case, "Parsing separator"), making it clear which part of the input caused the failure.
-
-### Considerations
-
-1. **Verbosity**: While context information is valuable, overly verbose contexts can clutter your code and trace output. Aim for concise yet informative context messages.
-
-2. **Consistency**: Try to maintain a consistent style and level of detail in your context messages across your parsing code for better readability.
-
-By leveraging context information, you can significantly improve the debuggability and maintainability of your nom parsers, especially in larger and more complex parsing scenarios.
-
-## Real-time Printing with `trace-print`
-
-The `trace-print` feature allows you to see trace events as they happen, providing immediate feedback during parser execution. This can be particularly useful for debugging complex parsers or those that might cause stack overflows.
-
-**Note**: The trace-print feature works in conjunction with the activation state of tags. Only trace events for activated tags will be printed in real-time. This means you can still control which parts of your parser generate output by activating or deactivating specific tags, even when using real-time printing.
-
-### Enabling the Feature
-
-To use real-time printing, you need to enable the `trace-print` feature in your `Cargo.toml`:
+The `trace-context` feature can also be used independently of full tracing. This allows you to enhance your `nom` error messages with additional context without enabling full tracing functionality. To use `trace-context` without full tracing, configure your `Cargo.toml` like this:
 
 ```toml
 [dependencies]
-nom-tracer = { version = "0.1.0", features = ["trace-print"] }
+nom-tracer = { version = "0.2", default-features = false, features = ["trace-context"] }
 ```
 
-### Example Usage
+This configuration provides enhanced error messages with context information while avoiding the overhead of full tracing in production environments. It's particularly useful when you want more informative error messages but don't need the detailed execution trace that full tracing provides.
 
-Here's an example of how you might use the `trace-print` feature:
-
-```rust
-use nom_tracer::trace;
-use nom::multi::many1;
-use nom::character::complete::alpha1;
-use nom::IResult;
-
-fn parse_words(input: &str) -> IResult<&str, Vec<&str>> {
-    trace!("Parsing multiple words", many1(trace!(alpha1)))(input)
-}
-
-fn main() {
-    let input = "hello world parser";
-    let result = parse_words(input);
-    println!("Final result: {:?}", result);
-}
-```
-
-When you run this code with the `trace-print` feature enabled, you'll see trace events printed to the console in real-time as the parser executes, even before the final result is printed.
-
-### Considerations
-
-1. **Output Volume**: Real-time printing can generate a lot of console output, especially for complex parsers or large inputs. Be prepared for potentially verbose output.
-
-2. **Interleaved Output**: If you're also printing other information to the console, it may become interleaved with the trace output. Consider using different output streams or formatting to distinguish between trace events and other output.
-
-## Cargo Features
-
-- `trace`: Enable tracing (default)
-- `trace-color`: Enable colorized output
-- `trace-print`: Print trace events in real-time (unbuffered)
-- `trace-context`: Add context information to error messages
-
-To enable a feature, add it to your `Cargo.toml`:
-
-```toml
-[dependencies]
-nom-tracer = { version = "0.1.0", features = ["trace-color", "trace-context"] }
-```
-
-For production builds, you can disable all tracing features to ensure zero overhead:
-
-```toml
-[dependencies]
-nom-tracer = { version = "0.1.0", default-features = false }
-```
-
-### Trace: `trace`
-
-The `trace` feature is the core functionality of `nom-tracer`. When enabled, it allows you to wrap your parsers with tracing functions that record the execution flow of your parsing operations.
-
-### Trace Color: `trace-color`
-
-The `trace-color` feature enhances the readability of your trace output by adding color coding. This is particularly useful when dealing with complex parsers or large trace outputs.
-
-### Trace Context: `trace-context`
-
-The `trace-context` feature allows you to add contextual information to your parsers. This context is included in the trace output and, more importantly, in error messages. This feature is particularly useful for complex parsers where you need more information about where and why a parsing operation failed.
-
-### Real-time Tracing: `trace-print`
-
-The `trace-print` feature allows you to see trace events as they happen, providing immediate feedback during parser execution. This can be particularly useful for debugging complex parsers or those that might cause stack overflows. When combined with the [`max_level!`](#max_level) macro, it becomes a powerful tool for troubleshooting infinite recursion issues.
-
-#### Example Usage with `max_level!`
-
-Here's an example of how you might use the `trace-print` feature in combination with [`max_level!`](#max_level) to debug a potentially infinitely recursive parser:
-
-```rust
-use nom_tracer::{trace, max_level};
-use nom::sequence::tuple;
-use nom::character::complete::{alpha1, char};
-use nom::IResult;
-
-fn recursive_parser(input: &str) -> IResult<&str, &str> {
-    trace!(
-        "Recursive parsing",
-        tuple((
-            alpha1,
-            char(','),
-            |i| recursive_parser(i)  // Potential infinite recursion
-        ))
-    )(input)
-}
-
-fn main() {
-    // Set a maximum nesting level
-    max_level!(Some(10));
-
-    // This will print trace events in real-time and panic if nesting exceeds 10 levels
-    let input = "a,b,c,d,e,f,g,h,i,j,k";
-    let result = recursive_parser(input);
-    println!("Final result: {:?}", result);
-}
-```
-
-When you run this code with the `trace-print` feature enabled, you'll see trace events printed to the console in real-time as the parser executes. If the parser reaches the maximum nesting level set by [`max_level!`](#max_level), it will panic, but you'll have a real-time trace of the parser's execution up to that point.
-
-### Benefits for Debugging Infinite Recursion
-
-1. **Immediate Feedback**: You can see the parser's progress in real-time, helping you identify where it might be getting stuck.
-2. **Controlled Execution**: [`max_level!`](#max_level) prevents actual infinite recursion, while `trace-print` shows you how the parser behaved up to that point.
-3. **Insight into Parser Behavior**: You can observe the exact sequence of parser calls leading up to the recursion limit.
-4. **Easy Adjustment**: You can quickly adjust the [`max_level!`](#max_level) value to get more or less detail as needed for your debugging process.
-
-### Considerations
-
-1. **Output Volume**: Real-time printing can generate a lot of console output, especially for complex parsers or large inputs. Be prepared for potentially verbose output.
-
-2. **Interleaved Output**: If you're also printing other information to the console, it may become interleaved with the trace output. Consider using different output streams or formatting to distinguish between trace events and other output.
+Whether used with or without full tracing, the `trace-context` feature helps in quickly identifying where and why parsing failures occur, significantly improving the debugging experience.
 
 ## Contributing
 
@@ -720,4 +341,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is license

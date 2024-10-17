@@ -276,8 +276,7 @@ pub fn print_trace_for_tag(tag: &'static str) {
     print(get_trace_for_tag(tag).unwrap_or(format!("No trace found for tag '{}'", tag)));
 }
 
-// TODO: Remove and use `std` instead.
-/// Helper function to print a string.
+/// Helper function to for unbuffered output.
 ///
 /// # Arguments
 ///

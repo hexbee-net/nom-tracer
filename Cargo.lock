@@ -26,7 +26,7 @@ dependencies = [
 
 [[package]]
 name = "nom-tracer"
-version = "0.1.6"
+version = "1.0.0"
 dependencies = [
  "nom",
 ]

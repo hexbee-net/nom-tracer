@@ -50,7 +50,7 @@ fn main() {
 fn main() {
     println!("This example requires the 'trace-silencing' feature to be enabled.");
     println!("Please add the following to your Cargo.toml:");
-    println!("nom-tracer = {{ version = \"0.2\", features = [\"trace-silencing\"] }}");
+    println!("nom-tracer = {{ version = \"1.0\", features = [\"trace-silencing\"] }}");
 }
 
 #[cfg(test)]
