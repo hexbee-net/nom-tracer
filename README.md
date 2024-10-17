@@ -288,6 +288,19 @@ fn main() {
 }
 ```
 
+> [!IMPORTANT]
+> `set_max_level!` is effective only for infinite recursions that occurs during the actual parsing process.
+> It cannot prevent or detect infinite recursions that happens during parser construction. For example:
+> 
+> ```rust
+> fn problematic_parser(input: &str) -> IResult<&str, &str> {
+>   problematic_parser(input)  // This will cause a stack overflow during parser construction
+> }
+> ```
+> 
+> In cases like this, where the recursion occurs before any input is supplied, `set_max_level!` will not be able to prevent the stack overflow, and no trace will be outputted because the code never reaches the point where tracing begins.
+
+
 `set_max_level!` is primarily a debugging tool, useful during development to catch potential issues with recursive parsers or unexpected deep nesting. The appropriate maximum level depends on your parser's structure. Set it high enough to allow for valid deep nesting, but low enough to catch potential infinite recursion. You can set different limits for different tags, allowing for fine-grained control over various parts of your parser. This macro is only available when the `trace-max-level` feature is enabled.
 
 ## Cargo Features
