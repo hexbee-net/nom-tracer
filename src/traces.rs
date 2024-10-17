@@ -120,6 +120,9 @@ impl Trace {
         #[cfg(not(feature = "trace-print"))] _silent: bool,
     ) -> usize {
         if self.active {
+            if self.level == 0 {
+                panic!("Cannot close at level 0: location=\"{}\"", location);
+            }
             self.level -= 1;
 
             let event_type = match result {

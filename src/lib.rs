@@ -192,7 +192,9 @@ where
         let input2 = input.clone();
         let input3 = input.clone();
 
+        let silent_cut_level = TRACE_SILENT.with(|tags| tags.borrow_mut().level);
         let cut_level = TRACE_TAGS.with(|tags| (*tags.borrow_mut()).level_for_tag(tag));
+        let cut_level = silent_cut_level.max(cut_level);
 
         TREE_SILENCE_LEVELS.with(|levels| {
             (*levels.borrow_mut()).push(cut_level);
@@ -382,7 +384,7 @@ mod tests {
 
     #[cfg(feature = "trace-silencing")]
     mod trace_silencing_tests {
-        use super::*;
+        use {super::*, nom::sequence::tuple};
 
         #[test]
         fn test_silence_tree() {
@@ -424,6 +426,69 @@ mod tests {
             let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(trace.contains("outer_parser"));
             assert!(!trace.contains("inner_parser"));
+        }
+
+        #[test]
+        fn test_nested_silence_tree() {
+            #[allow(clippy::type_complexity)]
+            fn nested_parser(
+                input: &str,
+            ) -> IResult<&str, (&str, (&str, &str), &str), VerboseError<&str>> {
+                trace!(
+                    "outer",
+                    tuple((
+                        trace!("first", tag::<_, _, VerboseError<&str>>("a")),
+                        silence_tree!(
+                            "silent",
+                            tuple((
+                                trace!("second", tag("b")),
+                                silence_tree!("inner_silent", trace!("third", tag("c"))),
+                            ))
+                        ),
+                        trace!("fourth", tag("d")),
+                    ))
+                )(input)
+            }
+
+            // Run the parser
+            let result = nested_parser("abcd");
+            assert!(result.is_ok());
+
+            // Get the trace
+            let trace = get_trace!().unwrap();
+            println!("{}", trace);
+
+            // Check that the trace contains the expected elements
+            assert!(trace.contains("outer"));
+            assert!(trace.contains("first"));
+            assert!(trace.contains("fourth"));
+
+            // Check that the silenced parts are not in the trace
+            assert!(!trace.contains("silent"));
+            assert!(!trace.contains("second"));
+            assert!(!trace.contains("inner_silent"));
+            assert!(!trace.contains("third"));
+
+            // Additional checks to ensure correct nesting behavior
+            assert_eq!(trace.matches("[outer]").count(), 2); // Open and close for outer
+            assert_eq!(trace.matches("[first]").count(), 2); // Open and close for first
+            assert_eq!(trace.matches("[fourth]").count(), 2); // Open and close for fourth
+
+            // The silent part should not increase the visible nesting level
+            assert!(!trace.contains("| | |"));
+
+            // Check the order of operations
+            let trace_lines: Vec<&str> = trace.split('\n').collect();
+            assert!(
+                trace_lines
+                    .iter()
+                    .position(|&r| r.contains("first"))
+                    .unwrap()
+                    < trace_lines
+                        .iter()
+                        .position(|&r| r.contains("fourth"))
+                        .unwrap()
+            );
         }
     }
 
