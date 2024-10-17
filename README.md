@@ -7,6 +7,10 @@
 `nom-tracer` is a powerful and flexible tracing utility for the [nom](https://github.com/Geal/nom) parser combinator library.
 It allows you to easily trace the execution of your parsers, providing invaluable insights for debugging and optimization.
 
+<p align="center">
+   <img src="https://github.com/user-attachments/assets/7d4bc383-b68f-4510-9f07-5cb9ae127ac6" width="700" alt="nom-tracer screenshot">
+</p>
+
 ## Contents
 
 - [Features](#features)
