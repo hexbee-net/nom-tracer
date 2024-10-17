@@ -75,7 +75,8 @@ impl<I, E> TraceError<I> for E where E: Debug {}
 pub fn tr<I, O, E, F>(
     #[cfg(feature = "trace")] tag: &'static str,
     #[cfg(not(feature = "trace"))] _tag: &'static str,
-    context: Option<&'static str>,
+    #[cfg(any(feature = "trace", feature = "trace-context"))] context: Option<&'static str>,
+    #[cfg(not(any(feature = "trace", feature = "trace-context")))] _context: Option<&'static str>,
     #[cfg(feature = "trace")] name: &'static str,
     #[cfg(not(feature = "trace"))] _name: &'static str,
     mut parser: F,
@@ -244,7 +245,6 @@ where
     }
 }
 
-// TODO: Return `Option<String>` instead.
 /// Retrieves the trace for a specific tag.
 ///
 /// # Arguments
@@ -257,20 +257,14 @@ where
 pub fn get_trace_for_tag(
     #[cfg(feature = "trace")] tag: &'static str,
     #[cfg(not(feature = "trace"))] _tag: &'static str,
-) -> String {
+) -> Option<String> {
     #[cfg(feature = "trace")]
     {
-        TRACE_TAGS.with(|trace| {
-            if let Some(trace) = trace.borrow().traces.get(tag) {
-                trace.to_string()
-            } else {
-                format!("No trace found for tag '{}'", tag)
-            }
-        })
+        TRACE_TAGS.with(|trace| trace.borrow().traces.get(tag).map(ToString::to_string))
     }
 
     #[cfg(not(feature = "trace"))]
-    String::new()
+    None
 }
 
 /// Prints the trace for a specific tag.
@@ -279,7 +273,7 @@ pub fn get_trace_for_tag(
 ///
 /// * `tag` - A static string identifying the tag for which to print the trace.
 pub fn print_trace_for_tag(tag: &'static str) {
-    print(get_trace_for_tag(tag));
+    print(get_trace_for_tag(tag).unwrap_or(format!("No trace found for tag '{}'", tag)));
 }
 
 // TODO: Remove and use `std` instead.
@@ -317,7 +311,7 @@ mod tests {
             let result = parser("hello world");
             assert!(result.is_ok());
 
-            let trace = get_trace_for_tag(DEFAULT_TAG);
+            let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(trace.contains("test_parser"));
             assert!(trace.contains("hello world"));
             assert!(trace.contains("-> Ok"));
@@ -334,7 +328,7 @@ mod tests {
             let result = parser("hello world");
             assert!(result.is_ok());
 
-            let trace = get_trace_for_tag(DEFAULT_TAG);
+            let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(trace.contains("test_parser"));
             assert!(trace.contains("context"));
             assert!(trace.contains("hello world"));
@@ -359,7 +353,7 @@ mod tests {
             let result = traced_parser("ab");
             assert!(result.is_ok());
 
-            let trace = get_trace_for_tag(DEFAULT_TAG);
+            let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(trace.contains("outer"));
             assert!(trace.contains("inner_a"));
             assert!(trace.contains("inner_b"));
@@ -375,7 +369,7 @@ mod tests {
             );
             let _ = parser("hello world");
 
-            let trace = get_trace_for_tag(DEFAULT_TAG);
+            let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(trace.contains("test_parser"));
             assert!(trace.contains("hello world"));
         }
@@ -383,7 +377,7 @@ mod tests {
         #[test]
         fn test_get_trace_for_nonexistent_tag() {
             let trace = get_trace_for_tag("nonexistent");
-            assert_eq!(trace, "No trace found for tag 'nonexistent'");
+            assert!(trace.is_none());
         }
     }
 
@@ -402,7 +396,7 @@ mod tests {
             let result = parser("hello world");
             assert!(result.is_ok());
 
-            let trace = get_trace_for_tag(DEFAULT_TAG);
+            let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(!trace.contains("silent_parser"));
         }
 
@@ -428,7 +422,7 @@ mod tests {
             let result = outer_parser("hello world");
             assert!(result.is_ok());
 
-            let trace = get_trace_for_tag(DEFAULT_TAG);
+            let trace = get_trace_for_tag(DEFAULT_TAG).unwrap();
             assert!(trace.contains("outer_parser"));
             assert!(!trace.contains("inner_parser"));
         }
@@ -467,7 +461,7 @@ mod tests {
     mod no_trace_tests {
         use {
             super::*,
-            nom::error::{ErrorKind, ParseError, VerboseErrorKind},
+            nom::error::{ErrorKind, VerboseErrorKind},
         };
 
         #[test]
@@ -485,15 +479,14 @@ mod tests {
 
         #[test]
         fn test_get_trace_for_tag_without_trace() {
-            let trace = get_trace_for_tag(DEFAULT_TAG);
-            assert_eq!(trace, "");
+            assert!(get_trace_for_tag(DEFAULT_TAG).is_none());
         }
 
         #[cfg(feature = "trace-context")]
         mod context_without_trace_tests {
             use {
                 super::*,
-                nom::error::{ErrorKind, ParseError, VerboseErrorKind},
+                nom::error::{ErrorKind, VerboseErrorKind},
             };
 
             #[test]

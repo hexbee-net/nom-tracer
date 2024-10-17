@@ -31,10 +31,10 @@ fn main() {
     print_trace!(user_parser);
 
     println!("\nName parser trace:");
-    println!("{}", get_trace!(name_parser));
+    println!("{}", get_trace!(name_parser).unwrap());
 
     println!("\nID parser trace:");
-    println!("{}", get_trace!(id_parser));
+    println!("{}", get_trace!(id_parser).unwrap());
 }
 
 #[cfg(test)]

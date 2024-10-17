@@ -53,3 +53,8 @@ check:
 @test:
   echo "Running tests..."
   cargo nextest run --all --all-features
+  cargo nextest run --no-default-features
+  cargo nextest run -F trace
+  cargo nextest run -F trace-context
+  cargo nextest run -F trace,trace-context
+  cargo nextest run --examples --all-features

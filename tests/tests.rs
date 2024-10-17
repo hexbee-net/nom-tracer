@@ -26,7 +26,7 @@ mod trace_tests {
         let result = trace!(parse_ab)("ab");
         assert!(result.is_ok());
 
-        let trace = get_trace!();
+        let trace = get_trace!().unwrap();
         assert!(trace.contains("test_simple_trace"));
         assert!(trace.contains("-> Ok"));
     }
@@ -36,7 +36,7 @@ mod trace_tests {
         let result = trace!(custom_tag, parse_ab)("ab");
         assert!(result.is_ok());
 
-        let trace = get_trace!(custom_tag);
+        let trace = get_trace!(custom_tag).unwrap();
         assert!(trace.contains("test_trace_with_tag"));
         assert!(trace.contains("-> Ok"));
     }
@@ -46,7 +46,7 @@ mod trace_tests {
         let result = trace!("custom_context", parse_ab)("ab");
         assert!(result.is_ok());
 
-        let trace = get_trace!();
+        let trace = get_trace!().unwrap();
         assert!(trace.contains("test_trace_with_context"));
         assert!(trace.contains("custom_context"));
         assert!(trace.contains("-> Ok"));
@@ -57,7 +57,7 @@ mod trace_tests {
         activate_trace!();
         let result = trace!(parse_ab)("ab");
         assert!(result.is_ok());
-        assert!(!get_trace!().is_empty());
+        assert!(!get_trace!().unwrap().is_empty());
 
         deactivate_trace!();
         let result = trace!(parse_ab)("ab");
@@ -70,12 +70,15 @@ mod trace_tests {
 
         activate_trace!();
         reset_trace!();
-        assert!(get_trace!().is_empty(), "Trace should be empty after reset");
+        assert!(
+            get_trace!().unwrap().is_empty(),
+            "Trace should be empty after reset"
+        );
 
         let result = trace!(parse_ab)("ab");
         assert!(result.is_ok());
         assert!(
-            !get_trace!().is_empty(),
+            !get_trace!().unwrap().is_empty(),
             "Trace should not be empty after new parsing"
         );
     }
@@ -125,8 +128,7 @@ mod trace_silencing_tests {
         let result = outer_parser("ab");
         assert!(result.is_ok());
 
-        let trace = get_trace!();
-        println!("{}", trace);
+        let trace = get_trace!().unwrap();
         assert!(trace.contains("outer"));
         assert!(!trace.contains("inner"));
     }
@@ -135,7 +137,7 @@ mod trace_silencing_tests {
 // Tests for when trace is not enabled
 #[cfg(not(feature = "trace"))]
 mod no_trace_tests {
-    use {super::*, nom::error::VerboseErrorKind};
+    use super::*;
 
     #[test]
     fn test_trace_macros_do_nothing() {
@@ -147,7 +149,7 @@ mod no_trace_tests {
         deactivate_trace!();
         reset_trace!();
 
-        assert_eq!(get_trace!(), "");
+        assert!(get_trace!().is_none());
     }
 
     #[cfg(feature = "trace-context")]
