@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "nom-tracer"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Xavier Basty <xavier@hexbee.net>"]
 repository = "https://github.com/hexbee-net/nom-tracer"
 keywords = ["parser", "nom", "trace", "debug"]
