@@ -4,17 +4,25 @@
 [![Documentation](https://docs.rs/nom-tracer/badge.svg)](https://docs.rs/nom-tracer)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-`nom-tracer` is a powerful and flexible tracing utility for the [nom](https://github.com/Geal/nom) parser combinator library.
-It allows you to easily trace the execution of your parsers, providing invaluable insights for debugging and optimization.
+`nom-tracer` is a powerful and flexible tracing utility for the [nom](https://github.com/Geal/nom) parser combinator library. It provides a unique combination of robust debugging capabilities and minimal performance impact, allowing you to gain deep insights into your parsers' execution without sacrificing speed in production.
 
-<p align="center">
+Key features include:
+- 🔍 Trace parser execution with minimal code changes
+- 📊 Hierarchical view of parser execution
+- 🏷️ Support for multiple trace tags to organize parser traces
+- 🤫 Silence subtrees to reduce noise in well-tested parts of your parser
+- 🎨 Colorized output for easy reading
+- 🔧 Configurable via Cargo features
+- 🚀 **Zero overhead when disabled** - compile out all tracing code in release builds
+
+<div style="text-align: center;">
    <img src="https://github.com/user-attachments/assets/7d4bc383-b68f-4510-9f07-5cb9ae127ac6" width="700" alt="nom-tracer screenshot">
-</p>
+</div>
+
+With `nom-tracer`, you get the best of both worlds: powerful debugging tools during development and optimal performance in production. During development and debugging, you can leverage detailed execution traces and context-rich error messages to quickly identify and resolve issues. In production builds, all tracing code can be completely compiled out, ensuring your parsers run at full speed with no overhead.
 
 ## Contents
 
-- [Features](#features)
-- [Performance](#performance)
 - [Quick Start](#quick-start)
 - [Macros](#macros)
    - [trace!](#trace)
@@ -29,30 +37,20 @@ It allows you to easily trace the execution of your parsers, providing invaluabl
 - [Contributing](#contributing)
 - [License](#license)
 
-## Features
-
-- 🔍 Trace parser execution with minimal code changes
-- 🚀 **Zero overhead when disabled** - compile out all tracing code in release builds
-- 🎨 Colorized output for easy reading (optional)
-- 🏷️ Support for multiple trace tags to organize parser traces
-- 📊 Hierarchical view of parser execution
-- 🤫 Silence subtrees to reduce noise in well-tested parts of your parser
-- 🔧 Configurable via Cargo features
-
-## Performance
-
-One of the key advantages of `nom-tracer` is its minimal performance impact:
-
-- **When disabled**: The tracing code is completely compiled out, resulting in **virtually zero overhead**. Your parsers will run at full speed in production builds.
-- **When enabled**: The tracing functionality is designed to be as lightweight as possible, allowing for detailed insights with minimal performance cost during development and debugging.
-
 ## Quick Start
 
 Add `nom-tracer` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nom-tracer = "0.2"
+nom-tracer = "1.0"
+```
+
+By default, this will enable all features. If you want to use only specific features, you can disable the default features and enable only the ones you need:
+
+```toml
+[dependencies]
+nom-tracer = { version = "0.2", default-features = false, features = ["trace", "trace-context"] }
 ```
 
 Then, use the `trace!` macro to wrap your parsers:
@@ -81,7 +79,7 @@ For production builds, you can disable all tracing features to ensure zero overh
 
 ```toml
 [dependencies]
-nom-tracer = { version = "0.2", default-features = false }
+nom-tracer = { version = "1.0", default-features = false }
 ```
 
 For more detailed examples showcasing various features of `nom-tracer`, check out the [`examples`](https://github.com/hexbee-net/nom-tracer/tree/main/examples) folder in the root of the repository.
@@ -305,18 +303,20 @@ fn main() {
 
 ## Cargo Features
 
-- `trace`: Enable tracing (default)
+All features are enabled by default. Here's a list of available features:
+
+- `trace`: Enable tracing
 - `trace-color`: Enable colorized output
 - `trace-print`: Print trace events in real-time (unbuffered)
 - `trace-context`: Add context information to error messages (can be used independently of `trace`)
 - `trace-silencing`: Enable the `silence_tree!` macro functionality
 - `trace-max-level`: Enable maximum nesting level functionality
 
-To enable features, add them to your `Cargo.toml`:
+To disable all features and enable only specific ones, you can use the following in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nom-tracer = { version = "0.2", features = ["trace-color", "trace-context", "trace-silencing"] }
+nom-tracer = { version = "0.2", default-features = false, features = ["trace", "trace-context"] }
 ```
 
 Note that the `trace-context` feature can be used independently of the `trace` feature. This allows you to add context to your `nom` errors without enabling full tracing functionality.
@@ -343,7 +343,7 @@ The `trace-context` feature can also be used independently of full tracing. This
 
 ```toml
 [dependencies]
-nom-tracer = { version = "0.2", default-features = false, features = ["trace-context"] }
+nom-tracer = { version = "1.0", default-features = false, features = ["trace-context"] }
 ```
 
 This configuration provides enhanced error messages with context information while avoiding the overhead of full tracing in production environments. It's particularly useful when you want more informative error messages but don't need the detailed execution trace that full tracing provides.
