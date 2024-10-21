@@ -63,7 +63,7 @@ impl Display for TraceEvent {
 
         #[cfg(feature = "trace-color")]
         {
-            ctx = format!("{}{}", ansi::BG_BRIGHT_BLUE, ctx);
+            ctx = format!("{}{}", ansi::BG_BLUE, ctx);
         }
 
         #[cfg(feature = "trace-color")]
@@ -86,28 +86,28 @@ impl Display for TraceEvent {
                 }
                 TraceEventType::CloseOk(result) => format!(
                     "{}-> Ok({}{}{})",
-                    ansi::FG_BRIGHT_GREEN,
+                    ansi::FG_GREEN,
                     ansi::TEXT_INVERSE,
                     result,
                     ansi::TEXT_INVERSE_RESET
                 ),
                 TraceEventType::CloseError(e) => format!(
                     "{}-> Error({}{}{})",
-                    ansi::FG_BRIGHT_RED,
+                    ansi::FG_RED,
                     ansi::TEXT_INVERSE,
                     e,
                     ansi::TEXT_INVERSE_RESET
                 ),
                 TraceEventType::CloseFailure(e) => format!(
                     "{}-> Failure({}{}{})",
-                    ansi::FG_BRIGHT_MAGENTA,
+                    ansi::FG_MAGENTA,
                     ansi::TEXT_INVERSE,
                     e,
                     ansi::TEXT_INVERSE_RESET
                 ),
                 TraceEventType::CloseIncomplete(i) => format!(
                     "{}-> Incomplete({}{:?}{})",
-                    ansi::FG_BRIGHT_YELLOW,
+                    ansi::FG_YELLOW,
                     ansi::TEXT_INVERSE,
                     i,
                     ansi::TEXT_INVERSE_RESET
